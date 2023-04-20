@@ -101,14 +101,14 @@ celerybeat.pid
 # SageMath parsed files
 *.sage.py
 
-# Environments
-.env
-.venv
-env/
-venv/
-ENV/
-env.bak/
-venv.bak/
+# # Environments
+# .env
+# .venv
+# env/
+# venv/
+# ENV/
+# env.bak/
+# venv.bak/
 
 # Spyder project settings
 .spyderproject
@@ -127,3 +127,16 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+.idea*
+*/__pycache__/*
+*/*/__pycache__/*
+logs/
+olympics_engine/__pycache__/
+olympics_engine/scenario/__pycache__/
+olympics_engine/test/.pytest_cache/
+/rl_trainer/models/
+
+data/
+.DS_Store
+*/.DS_Store
