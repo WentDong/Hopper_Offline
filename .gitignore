@@ -139,3 +139,4 @@ olympics_engine/test/.pytest_cache/
 
 .DS_Store
 */.DS_Store
+models/

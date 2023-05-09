@@ -160,7 +160,7 @@ def get_valid_agents():
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--my_ai", default="random", help="random")
+    parser.add_argument("--my_ai", default="bc", help="random")
     parser.add_argument("--env_name", choices=['classic_Acrobot-v1', 'gym_Hopper-v2'], required=True)
     args = parser.parse_args()
 
@@ -168,6 +168,7 @@ if __name__ == "__main__":
     game = make(env_type, seed=None)
 
     render_mode = True
+    # render_mode = False
 
     # policy_list = ["random"] * len(game.agent_nums)
     policy_list = [args.my_ai] #["random"] * len(game.agent_nums), here we control agent 2 (green agent)

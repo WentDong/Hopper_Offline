@@ -31,3 +31,10 @@ class BC(torch.nn.Module):
 		pred = self.forward(state)
 		loss = self.loss(pred, action)
 		return loss
+	
+	def take_action(self, state):
+		# print(state)
+		state = torch.tensor(state).float()
+		action = self.forward(state)
+		# print(action.detach().numpy())
+		return action.detach().numpy()
