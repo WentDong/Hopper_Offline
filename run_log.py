@@ -161,7 +161,7 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
     parser.add_argument("--my_ai", default="bc", help="random")
-    parser.add_argument("--env_name", choices=['classic_Acrobot-v1', 'gym_Hopper-v2'], required=True)
+    parser.add_argument("--env_name", default = 'gym_Hopper-v2', choices=['classic_Acrobot-v1', 'gym_Hopper-v2'], required=True)
     args = parser.parse_args()
 
     env_type = args.env_name

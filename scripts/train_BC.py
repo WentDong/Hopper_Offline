@@ -19,6 +19,7 @@ from tqdm import *
 
 def train(model, dataLoader, args):
 	optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+	scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
 	Mx_Reward = 0
 	dir = os.path.join(args.save_dir, "BC")
 	if not os.path.exists(dir):
@@ -40,13 +41,13 @@ def train(model, dataLoader, args):
 				pbar.set_postfix(loss=loss.item())
 				pbar.update(1)
 				# Print loss
-		Reward = evaluation(model)
+		Reward, episodes_len = evaluation(model)
 		if Reward> Mx_Reward:
 			torch.save(model, os.path.join(dir, "BC_best.pth"))
-
+		scheduler.step()
 		torch.save(model, os.path.join(dir,"BC_{}.pth".format(epoch%10)))
 		# tqdm.set_description("Epoch: {}, Reward: {}".format(epoch, Reward))
-		print("Epoch: {}, Reward: {}".format(epoch, Reward))
+		print("Epoch: {}, Reward: {}, Mean Episodes Length: {}".format(epoch, Reward, episodes_len))
 
 if __name__ == "__main__":
 	args = get_args()

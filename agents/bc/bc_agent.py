@@ -13,9 +13,6 @@ class BC(torch.nn.Module):
 		self.fc3 = torch.nn.Linear(hidden_dim, self.action_dim)
 		self.relu = torch.nn.ReLU()
 		self.tanh = torch.nn.Tanh()
-		self.sigmoid = torch.nn.Sigmoid()
-		self.dropout = torch.nn.Dropout(p=0.5)
-		self.softmax = torch.nn.Softmax(dim=1)
 		self.loss = torch.nn.MSELoss()
 		
 	def forward(self, state):
