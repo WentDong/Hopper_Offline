@@ -5,6 +5,8 @@ import os
 
 class SamaplesDataset(Dataset):
 	def __init__(self, dataset_path, file_name):
+		if dataset_path == "":
+			return
 		self.keys = ["action", "next_state", "not_done", "reward", "state"]
 		self.samples = {}
 		for key in self.keys:
@@ -13,15 +15,32 @@ class SamaplesDataset(Dataset):
 	def get_samples(self, num_samples):
 		idx = np.random.randint(0, len(self.samples['state']), num_samples)
 		return {key: self.samples[key][idx] for key in self.keys}
+	@staticmethod
+	def from_buffer(buffer):
+		dataset = SamaplesDataset("", "")
+		dataset.keys = buffer.keys
+		dataset.samples = {}
+		for sample in buffer.storage:
+			for i, key in enumerate(dataset.keys):
+				if sample[i] is None:
+					continue
+				if key not in dataset.samples:
+					dataset.samples[key] = []
+				dataset.samples[key].append(sample[i])
+		dataset.keys = list(dataset.samples.keys())
+		for key in dataset.keys:
+			dataset.samples[key] = np.array(dataset.samples[key])
+		if "done" in dataset.samples:
+			dataset.samples["not_done"] = 1 - dataset.samples["done"]
+
+		return dataset
 
 	def __len__(self):
 		return len(self.samples['state'])
 	
 	def __getitem__(self, index):
 		return {key: self.samples[key][index] for key in self.keys}
-	
-	
-	
+
 class TrajectoryDataset(Dataset):
 	def __init__(self, dataset_path, file_name):
 		self.keys = ["action", "next_state", "not_done", "reward", "state"]
