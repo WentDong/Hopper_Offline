@@ -144,3 +144,4 @@ MUJOCO_LOG.TXT
 *.pth
 **/plots/*.png
 **/results/*.npy
+runs/
