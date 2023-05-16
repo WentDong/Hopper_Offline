@@ -66,6 +66,11 @@ class TrajectoryDataset(Dataset):
 				Traj = []
 		print("Average Trajectory Length: {}".format(lengths/len(self.Trajectories)))
 		print("Average Accumulated Reward: {}".format(Accumulated_Reward/len(self.Trajectories)))
+
+	def get_samples(self, num_samples):
+		idx = np.random.randint(0, len(self.Trajectories), num_samples)
+		return self.Trajectories[idx]
+	
 	def __getitem__(self, index):
 		return self.Trajectories[index]
 	def __len__(self):

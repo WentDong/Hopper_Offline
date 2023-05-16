@@ -10,7 +10,7 @@ os.sys.path.insert(0, parentdir)
 os.sys.path.insert(0, os.path.dirname(parentdir))
 
 from evaluate import evaluation
-from dataloader import D4RLTrajectoryDataset
+from dataloader import SamaplesDataset
 from args import get_args
 from agents.bail import utils, bail_training
 from agents.bail.mcret import *
@@ -146,7 +146,7 @@ if __name__ == "__main__":
     selected_buffer, selected_len, border = select_batch_ue(replay_buffer, states, returns, ue_model, C, args)
 
     # prepare dataloader
-    dataset = D4RLTrajectoryDataset.from_buffer(selected_buffer)
+    dataset = SamaplesDataset.from_buffer(selected_buffer)
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
 
     # train bc

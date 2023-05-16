@@ -10,7 +10,7 @@ os.sys.path.insert(0, os.path.dirname(parentdir))
 
 
 from evaluate import evaluation
-from dataloader import D4RLTrajectoryDataset
+from dataloader import SamaplesDataset
 from args import get_args
 from agents.CQL.cql_agent import CQL
 from agents.CQL.cql_train import cql_train
@@ -23,7 +23,7 @@ def train(dataLoader, args):
 
 if __name__ == "__main__":
 	args = get_args()
-	dataset = D4RLTrajectoryDataset('../'+ args.dataset_path, args.file_name)
+	dataset = SamaplesDataset('../'+ args.dataset_path, args.file_name)
 	dataLoader = DataLoader(
 		dataset,
 		batch_size=args.batch_size,
