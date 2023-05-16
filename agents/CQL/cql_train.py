@@ -50,6 +50,7 @@ def cql_train(dataLoader, args):
                 agent.update(transition_dict)
                 pbar.update(1)
         
+        # evaluate and save actor model
         actor = agent.actor
         rewards, total_steps = evaluation(actor)
         print('Epoch:{}, rewards:{}, total_steps:{}'.format(epoch, rewards, total_steps))
