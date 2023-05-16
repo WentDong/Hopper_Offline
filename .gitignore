@@ -142,4 +142,5 @@ olympics_engine/test/.pytest_cache/
 models/
 MUJOCO_LOG.TXT
 *.pth
-*/plots/*.png
+**/plots/*.png
+**/results/*.npy
