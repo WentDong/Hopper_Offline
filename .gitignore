@@ -140,3 +140,6 @@ olympics_engine/test/.pytest_cache/
 .DS_Store
 */.DS_Store
 models/
+MUJOCO_LOG.TXT
+*.pth
+*/plots/*.png
