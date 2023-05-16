@@ -59,17 +59,26 @@ class ReplayBuffer(object):
 	def index(self, i):
 		return self.storage[i]
 
-	def save(self, filename):
-		np.save("./buffers/"+filename+"sars.npy", self.storage)
+	# def save(self, filename):
+	# 	np.save("./buffers/"+filename+"sars.npy", self.storage)
 
-	def load(self, path, filename, bootstrap_dim=None):
-		self.name = filename
+	def load(self, path, filename, truncation, bootstrap_dim=None):
+		self.name = filename + f"_trunc{truncation}" if truncation > 0 else filename
+		start = 0
 		data = {}
 		keys = ["action", "next_state", "not_done", "reward", "state"]
 		for key in keys:
 			data[key] = np.load(os.path.join(path, filename + "_" + key + ".npy"))
 		for i in range(len(data['state'])):
 			self.add((data['state'][i], data['next_state'][i], data['action'][i], data['reward'][i], 1 - data['not_done'][i]))
+			if truncation > 0:
+				if data['not_done'][i] == 0:
+					length = i - start + 1
+					start = i + 1
+					self.storage = self.storage[:-int(length * truncation)]
+					self.storage[-1] = (self.storage[-1][0], self.storage[-1][1], self.storage[-1][2], self.storage[-1][3], 1)
+
+
 
 		num_samples = len(self.storage)
 		print('Load buffer size:', num_samples)

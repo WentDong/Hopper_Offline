@@ -15,6 +15,7 @@ def get_args(algo="bc"):
 	parser.add_argument("--device", default="cuda", help="Device to run on")
 	parser.add_argument("--save_dir", default="models", help="Directory to save models")
 	if algo == "bail":  # BAIL
+		parser.add_argument('-t', '--trajectory_truncation', default=0., type=float, help='Trajectory truncation for BAIL')
 		parser.add_argument('-r', '--rollout', default=1000, help='Rollout length for MC estimation')
 		parser.add_argument('-g', '--gamma', default=0.99, help='Discount factor')
 		parser.add_argument('-a', '--augment_mc', default="gain", help='Augmentation method for MC estimation')
@@ -25,11 +26,11 @@ def get_args(algo="bc"):
 		parser.add_argument('-i', '--detect_interval', default=10000, help='Detection interval for BAIL')
 		parser.add_argument('-k', '--ue_loss_k', default=1000, help='Soft constraint for upper envelope loss')
 		parser.add_argument('-p', '--select_percentage', default=0.25, type=float, help='Percentage of data to select')
-		parser.add_argument('-t', '--max_timesteps', default=int(2e6), help='Max time steps to run environment for')
+		parser.add_argument('--max_timesteps', default=int(2e6), help='Max time steps to run environment for')
 	args = parser.parse_args()
 
 	if algo == "bail":
-		args.setting_name = "%s_r%s_g%s" % (args.file_name, args.rollout, args.gamma)
+		args.setting_name = "%s_r%s_g%s_t%s" % (args.file_name, args.rollout, args.gamma, args.trajectory_truncation)
 		args.setting_name += '_noaug' if not (args.augment_mc) else ''
 		args.setting_name += '_augNew' if args.augment_mc == 'new' else ''
 		args.data_name = args.setting_name

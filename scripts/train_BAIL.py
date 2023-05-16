@@ -33,13 +33,13 @@ def get_mcret(replay_buffer, args):
 
 
 def train_ue(states, returns, args):
-    if not os.path.exists('%s/Stat_UE_%s.pth' % ("./agents/bail/checkpoints", args.setting_name + '_lok%s' % args.ue_loss_k)):
+    if not os.path.exists('%s/Stat_UE_%s.pth' % ("./agents/bail/checkpoints", args.setting_name + '_lok%s' % args.ue_loss_k + "_trunc%s" % args.trajectory_truncation if args.trajectory_truncation > 0 else "")):
         # train ue
         print('ue train starts --')
         print('with testing MClength:', args.rollout, 'training loss ratio k:', args.ue_loss_k)
         upper_envelope, _ = train_upper_envelope(states, returns, state_dim=11, upper_learning_rate=args.ue_lr,
                                                  weight_decay=args.ue_wd, num_epoches=args.ue_n_epochs, k=args.ue_loss_k)
-        torch.save(upper_envelope.state_dict(), '%s/Stat_UE_%s.pth' % ("./agents/bail/checkpoints", args.setting_name + '_lok%s' % args.ue_loss_k))
+        torch.save(upper_envelope.state_dict(), '%s/Stat_UE_%s.pth' % ("./agents/bail/checkpoints", args.setting_name + '_lok%s' % args.ue_loss_k + "_trunc%s" % args.trajectory_truncation if args.trajectory_truncation > 0 else ""))
 
         print('plotting ue --')
         plot_envelope(upper_envelope, states, returns, args.ue_setting, [args.ue_lr, args.ue_wd, args.ue_loss_k, args.ue_n_epochs, 4])
@@ -47,7 +47,7 @@ def train_ue(states, returns, args):
     else:
         upper_envelope = Value(state_dim=11, activation='relu')
         upper_envelope.load_state_dict(
-            torch.load('%s/Stat_UE_%s.pth' % ("./agents/bail/checkpoints", args.setting_name + '_lok%s' % args.ue_loss_k)))
+            torch.load('%s/Stat_UE_%s.pth' % ("./agents/bail/checkpoints", args.setting_name + '_lok%s' % args.ue_loss_k + "_trunc%s" % args.trajectory_truncation if args.trajectory_truncation > 0 else "")))
         print('Load envelope with training loss ratio k:', args.ue_loss_k)
 
     # do clipping if needed
@@ -134,7 +134,7 @@ if __name__ == "__main__":
 
     # prepare replay buffer
     replay_buffer = utils.ReplayBuffer()
-    replay_buffer.load(args.dataset_path, args.file_name)
+    replay_buffer.load(args.dataset_path, args.file_name, args.trajectory_truncation)
 
     # get mc returns
     states, returns = get_mcret(replay_buffer, args)
