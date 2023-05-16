@@ -23,7 +23,7 @@ def train(dataLoader, args):
 
 if __name__ == "__main__":
 	args = get_args()
-	dataset = D4RLTrajectoryDataset(args.dataset_path, args.file_name)
+	dataset = D4RLTrajectoryDataset('../'+ args.dataset_path, args.file_name)
 	dataLoader = DataLoader(
 		dataset,
 		batch_size=args.batch_size,
