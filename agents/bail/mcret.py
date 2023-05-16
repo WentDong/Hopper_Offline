@@ -31,7 +31,7 @@ def get_mc(replay_buffer, data_name, gamma=0.99, rollout=1000, augment_mc='gain'
         if not os.path.exists(os.path.join(result_dir, 'ueMC_%s_S.npy' % buffer_name)):
             np.save(os.path.join(result_dir, 'ueMC_%s_S' % buffer_name), states)
         print(len(gains))
-        np.save(os.path.join(result_dir, 'ueMC_%s' % data_name, gains))
+        np.save(os.path.join(result_dir, 'ueMC_%s' % data_name), gains)
     else:
         raise Exception('! undefined mc calculation type')
 
