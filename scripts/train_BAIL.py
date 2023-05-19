@@ -18,6 +18,7 @@ from agents.bail.bail_training import Value, train_upper_envelope, plot_envelope
 from agents.bc.bc_agent import BC
 from torch.utils.data import DataLoader
 from tqdm import *
+from torch.utils.tensorboard import SummaryWriter
 
 # check directory
 # print('data directory', os.getcwd())
@@ -92,15 +93,17 @@ def select_batch_ue(replay_buffer, states, returns, upper_envelope, C, args):
 
 def train(model, dataLoader, args):
     optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.wd)
-    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.95)
     Mx_Reward = 0
     timesteps = 0
+    writer = SummaryWriter()
 
     env_list = Parallel_env(len = 16)
 
     dir = os.path.join(args.save_dir, "BAIL")
     if not os.path.exists(dir):
         os.makedirs(dir)
+    step = 0
     for epoch in trange(args.n_epochs):
         with tqdm(total=len(dataLoader)) as pbar:
             for batch in dataLoader:
@@ -111,6 +114,8 @@ def train(model, dataLoader, args):
                 loss = model.train(state, action)
 
                 optimizer.zero_grad()
+                writer.add_scalar("actor_loss", loss.item(), step)
+                step += 1
                 loss.backward()
                 # Update parameters
                 optimizer.step()
