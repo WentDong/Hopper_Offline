@@ -43,9 +43,10 @@ def train(model, dataLoader, args):
 				# Print loss
 		Reward, episodes_len = evaluation(model)
 		if Reward> Mx_Reward:
-			torch.save(model, os.path.join(dir, "BC_best.pth"))
+			torch.save(model.state_dict(), os.path.join(dir, "BC_best.pth"))
+			Mx_Reward = Reward
 		scheduler.step()
-		torch.save(model, os.path.join(dir,"BC_{}.pth".format(epoch%10)))
+		torch.save(model.state_dict(), os.path.join(dir,"BC_{}.pth".format(epoch%10)))
 		# tqdm.set_description("Epoch: {}, Reward: {}".format(epoch, Reward))
 		print("Epoch: {}, Reward: {}, Mean Episodes Length: {}".format(epoch, Reward, episodes_len))
 

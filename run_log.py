@@ -150,7 +150,7 @@ def run_game(g, env_name, multi_part_agent_ids, actions_spaces, policy_list, ren
     game_info["end_time"] = ed
     logs = json.dumps(game_info, ensure_ascii=False, cls=NpEncoder)
     logger.info(logs)
-    input()
+    # input()
 
 def get_valid_agents():
     dir_path = os.path.join(os.path.dirname(__file__), 'agents')

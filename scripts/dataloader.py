@@ -42,7 +42,7 @@ class SamaplesDataset(Dataset):
 		return {key: self.samples[key][index] for key in self.keys}
 
 class TrajectoryDataset(Dataset):
-	def __init__(self, dataset_path, file_name):
+	def __init__(self, dataset_path, file_name, truncation = 0):
 		self.keys = ["action", "next_state", "not_done", "reward", "state"]
 		samples = {}
 		for key in self.keys:
@@ -59,13 +59,19 @@ class TrajectoryDataset(Dataset):
 			not_done = samples['not_done'][i]
 			reward = samples['reward'][i]
 			Accumulated_Reward += reward
-			Traj.append((action, next_state, not_done, reward, state))
+			Traj.append((state, next_state, action, reward, not_done))
 			if not_done == 0:
-				self.Trajectories.append(Traj)
 				lengths += len(Traj)
+
+				if truncation > 0:
+					Traj = Traj[:-int(truncation * len(Traj))]
+					Traj[-1][4] = 0
+				self.Trajectories.append(Traj)
 				Traj = []
+		print("Before Truncation:")
 		print("Average Trajectory Length: {}".format(lengths/len(self.Trajectories)))
 		print("Average Accumulated Reward: {}".format(Accumulated_Reward/len(self.Trajectories)))
+
 
 	def get_samples(self, num_samples):
 		idx = np.random.randint(0, len(self.Trajectories), num_samples)

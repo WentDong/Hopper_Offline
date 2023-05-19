@@ -65,6 +65,6 @@ class BAIL(torch.nn.Module):
         return loss
 
     def take_action(self, state):
-        state = torch.tensor(state).float()
+        state = torch.tensor(state,  device=next(self.parameters()).device).float()
         action = self.forward(state)
-        return action.detach().numpy()
+        return action.detach().cpu().numpy()

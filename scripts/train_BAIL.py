@@ -1,7 +1,7 @@
 import gym
 import numpy as np
 import torch
-
+import time
 import inspect
 import os
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -9,7 +9,7 @@ parentdir = os.path.dirname(currentdir)
 os.sys.path.insert(0, parentdir)
 os.sys.path.insert(0, os.path.dirname(parentdir))
 
-from evaluate import evaluation
+from evaluate import *
 from dataloader import SamaplesDataset
 from args import get_args
 from agents.bail import utils, bail_training
@@ -20,10 +20,10 @@ from torch.utils.data import DataLoader
 from tqdm import *
 
 # check directory
-print('data directory', os.getcwd())
+# print('data directory', os.getcwd())
 # check pytorch device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print("running on device:", device)
+# print("running on device:", device)
 
 
 def get_mcret(replay_buffer, args):
@@ -95,6 +95,9 @@ def train(model, dataLoader, args):
     scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
     Mx_Reward = 0
     timesteps = 0
+
+    env_list = Parallel_env(len = 16)
+
     dir = os.path.join(args.save_dir, "BAIL")
     if not os.path.exists(dir):
         os.makedirs(dir)
@@ -118,11 +121,13 @@ def train(model, dataLoader, args):
                 if timesteps > args.max_timesteps:
                     break
             # Print loss
-        Reward, episodes_len = evaluation(model)
+        model_list = Parallel_model(model, len(env_list), device = args.device)
+        Reward, episodes_len = evaluation(model_list, env_list)
         if Reward > Mx_Reward:
-            torch.save(model, os.path.join(dir, "BAIL_best.pth"))
+            torch.save(model.state_dict(), os.path.join(dir, "BAIL_best.pth"))
+            Mx_Reward = Reward
         scheduler.step()
-        torch.save(model, os.path.join(dir, "BAIL_{}.pth".format(epoch % 10)))
+        torch.save(model.state_dict(), os.path.join(dir, "BAIL_{}.pth".format(epoch % 10)))
         # tqdm.set_description("Epoch: {}, Reward: {}".format(epoch, Reward))
         print("Epoch: {}, Timesteps: {}, Reward: {}, Mean Episodes Length: {}".format(epoch, timesteps, Reward, episodes_len))
         if timesteps > args.max_timesteps:

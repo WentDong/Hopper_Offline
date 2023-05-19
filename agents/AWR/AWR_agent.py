@@ -15,6 +15,7 @@ class AWR(nn.Module):
 			nn.Linear(128, 64),
 			nn.ReLU(),
 			nn.Linear(64, self.action_dim),
+			nn.Tanh()
 		)
 		self.critic = nn.Sequential(
 			nn.Linear(self.state_dim, 128),
