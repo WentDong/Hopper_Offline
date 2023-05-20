@@ -20,7 +20,7 @@ from tqdm import *
 def train(model, dataLoader, args):
 	optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 	scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
-	env_list = Parallel_env(len = 16)
+	eval = Evaluator(device=args.device)
 	Mx_Reward = 0
 	idx = 0
 	dir = os.path.join(args.save_dir, "BC", str(idx))
@@ -47,8 +47,7 @@ def train(model, dataLoader, args):
 				pbar.set_postfix(loss=loss.item())
 				pbar.update(1)
 				# Print loss
-		model_list = Parallel_model(model, len(env_list), device = args.device)
-		Reward, episodes_len = evaluation(model_list, env_list)
+		Reward, episodes_len = eval.evaluate(model)
 		if Reward> Mx_Reward:
 			torch.save(model.state_dict(), os.path.join(dir, "BC_best.pth"))
 			Mx_Reward = Reward

@@ -97,10 +97,15 @@ def train(model, dataLoader, args):
     Mx_Reward = 0
     timesteps = 0
     writer = SummaryWriter()
-
-    dir = os.path.join(args.save_dir, "BAIL")
-    if not os.path.exists(dir):
-        os.makedirs(dir)
+    Eval = Evaluator(device=args.device)
+    idx = 0
+    dir = os.path.join(args.save_dir, "BAIL", str(idx))
+    while os.path.exists(dir):
+        idx += 1
+        dir = os.path.join(args.save_dir, "BAIL", str(idx))
+    os.makedirs(dir)
+    with open(os.path.join(dir, "args.txt"), "w") as f:
+        f.write(str(args))
     step = 0
     for epoch in trange(args.n_epochs):
         with tqdm(total=len(dataLoader)) as pbar:
@@ -124,7 +129,7 @@ def train(model, dataLoader, args):
                 if timesteps > args.max_timesteps:
                     break
             # Print loss
-        Reward, episodes_len = evaluation(model, len=16, device=args.device)
+        Reward, episodes_len = Eval.evaluate(model)
         if Reward > Mx_Reward:
             torch.save(model.state_dict(), os.path.join(dir, "BAIL_best.pth"))
             Mx_Reward = Reward

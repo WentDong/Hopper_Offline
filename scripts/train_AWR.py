@@ -25,8 +25,7 @@ def train(model, replay_buffer, args):
 	writer = SummaryWriter()
 	step = 0	
 	Trajs_per_iter = 128
-	env_list = Parallel_env(len = 16)
-
+	Eval = Evaluator(device=args.device)
 	idx = 0
 	Mx_Reward = 0
 	dir = os.path.join(args.save_dir, "AWR", str(idx))
@@ -125,8 +124,7 @@ def train(model, replay_buffer, args):
 			# 	writer.add_scalar("advantage", advantage[0], step)
 			# 	step += 1
 				
-		model_list = Parallel_model(model, len(env_list))
-		Reward, episodes_len = evaluation(model_list, env_list)
+		Reward, episodes_len = Eval.evaluate(model)
 		torch.save(model.state_dict(), os.path.join(dir, "AWR_{}.pth".format(epoch%10)))
 		if Reward > Mx_Reward:
 			Mx_Reward = Reward

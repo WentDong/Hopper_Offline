@@ -14,7 +14,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from agents.CQL.cql_agent import CQL
-from scripts.evaluate import evaluation
+from scripts.evaluate import Evaluator
 
 # train & evaluate
 def cql_train(dataLoader, args):
@@ -34,7 +34,7 @@ def cql_train(dataLoader, args):
     action_bound = 1
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     target_entropy = -np.prod(3).item()
-
+    Eval = Evaluator(device = device)
 
     agent = CQL(state_dim=11, action_dim=3, hidden_dim=128, action_bound = action_bound, actor_lr = actor_lr,
             critic_lr = critic_lr, alpha_lr = alpha_lr, target_entropy = target_entropy, tau = tau,
@@ -52,7 +52,7 @@ def cql_train(dataLoader, args):
         
         # evaluate and save actor model
         actor = agent.actor
-        rewards, total_steps = evaluation(actor)
+        rewards, total_steps = Eval.evaluate(actor)
         print('Epoch:{}, rewards:{}, total_steps:{}'.format(epoch, rewards, total_steps))
         if rewards > max_reward:
             print("save new model")
