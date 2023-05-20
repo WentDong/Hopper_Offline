@@ -98,8 +98,6 @@ def train(model, dataLoader, args):
     timesteps = 0
     writer = SummaryWriter()
 
-    env_list = Parallel_env(len = 16)
-
     dir = os.path.join(args.save_dir, "BAIL")
     if not os.path.exists(dir):
         os.makedirs(dir)
@@ -126,8 +124,7 @@ def train(model, dataLoader, args):
                 if timesteps > args.max_timesteps:
                     break
             # Print loss
-        model_list = Parallel_model(model, len(env_list), device = args.device)
-        Reward, episodes_len = evaluation(model_list, env_list)
+        Reward, episodes_len = evaluation(model, len=16, device=args.device)
         if Reward > Mx_Reward:
             torch.save(model.state_dict(), os.path.join(dir, "BAIL_best.pth"))
             Mx_Reward = Reward
