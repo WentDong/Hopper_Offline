@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import copy
-
+import torch
 # Code based on:
 # https://github.com/openai/baselines/blob/master/baselines/deepq/replay_buffer.py
 # https://github.com/aviralkumar2907/BEAR/blob/master/utils.py
@@ -107,75 +107,64 @@ class Traj_Replay_Buffer(object):
 
 	def add(self, data):
 		self.storage.append(data)
-
+	def load(self, Traj_dataset):
+		for Traj in Traj_dataset.Trajectories:
+			self.add(Traj)
 	def sample(self, batch_size, require_idxs=False, space_rollout=0):
 		ind = np.random.randint(0, len(self.storage) - space_rollout,
 								size=batch_size)
+		# print(len(self.storage))
+		# print(ind)
+		# print(self.storage[ind])
+		ret = [self.storage[i] for i in ind]
+		# print(len(ret))
+		# print(len(ret[0]), ret[0][0])
 		if require_idxs:
-			return np.array(self.storage[ind]), ind
+			return ret, ind
 		else:
-			return np.array(self.storage[ind])			
+			return ret		
 			
 
 		
 
-def Mount_Carlo_Estimation(Replay_Buffer: Traj_Replay_Buffer, space_rollout=0, Sample_Size = -1, discount_factor = 0.99):
+def Mount_Carlo_Estimation(Replay_Buffer: Traj_Replay_Buffer, space_rollout=0, Sample_Size = -1, discount_factor = 0.95):
 	if Sample_Size == -1:
-		Trajs = np.array(Replay_Buffer.storage.copy())
+		Trajs = np.array(Replay_Buffer.storage)
 	else:
 		Trajs = Replay_Buffer.sample(Sample_Size, space_rollout=space_rollout)
-	rewards = [Trajs[i][3] for i in range(len(Trajs))]  # List containing the rewards for each sample.
-	monte_carlo_returns = []  # List containing the Monte-Carlo returns.
-	monte_carlo_return = 0
-	t = 0  # Exponent by which the discount factor is raised.
-	i = 0
-	while i < len(Trajs):
-		
-		while not Trajs[i][4]:  # Execute until you encounter a terminal state.
+	
+	Batch_monte_carlo_returns = []
 
-			# Equation to calculate the Monte-Carlo return.
-			monte_carlo_return += discount_factor ** t * rewards[i]
-			i += 1  # Go to the next sample.
-			t += 1  # Increasing the exponent by which the discount factor is raised.
+	for i in range(len(Trajs)):
+		Traj = Trajs[i]
 
-			# Condition to check whether we have reached the end of the replay memory without the episode being
-			# terminated, and if so break. (This can happen with the samples at the end of the replay memory as we
-			# only store the samples till we reach the replay memory size and not till we exceed it with the episode
-			# being terminated.)
-			if i == len(Trajs):
+		rewards = [Traj[j][3][0] for j in range(len(Traj))]  # List containing the rewards for each sample.
 
-				# If the episode hasn't terminated but you reach the end append the Monte-Carlo return to the list.
-				monte_carlo_returns.append(monte_carlo_return)
-
-				# Resetting the Monte-Carlo return value and the exponent to 0.
-				monte_carlo_return = 0
-				t = 0
-
-				break  # Break from the loop.
-
-		# If for one of the samples towards the end we reach the end of the replay memory and it hasn't terminated,
-		# we will go back to the beginning of the for loop to calculate the Monte-Carlo return for the future
-		# samples if any for whom the episode hasn't terminated.
-		if i == len(Trajs):
-			continue
-
-		# Equation to calculate the Monte-Carlo return.
-		monte_carlo_return += discount_factor ** t * rewards[i]
-
-		# Appending the Monte-Carlo Return for cases where the episode terminates without reaching the end of the
-		# replay memory.
-		monte_carlo_returns.append(monte_carlo_return)
-
-		# Resetting the Monte-Carlo return value and the exponent to 0.
+		monte_carlo_returns = []  # List containing the Monte-Carlo returns.
 		monte_carlo_return = 0
-		t = 0
 
-	monte_carlo_returns = np.array(monte_carlo_returns)
+		for j in range(len(Traj)-1, -1, -1):
+			# print(j, len(Traj), len(rewards))
+			monte_carlo_return = monte_carlo_return * discount_factor + rewards[j]
+			monte_carlo_returns = [monte_carlo_return] + monte_carlo_returns
+		# print(len(monte_carlo_returns))
+		Batch_monte_carlo_returns.append(np.array(monte_carlo_returns))
+		# print(len(Batch_monte_carlo_returns), Batch_monte_carlo_returns[-1].shape)
+	
 
 	# Normalizing the returns. 
 	# monte_carlo_returns = (monte_carlo_returns - np.mean(monte_carlo_returns)) / (np.std(monte_carlo_returns)
 	# 																				+ 1e-08)
 	# monte_carlo_returns = monte_carlo_returns.tolist()
 
-	return monte_carlo_returns
+	return Batch_monte_carlo_returns, Trajs
 
+def compute_advantage(gamma, lmbda, td_delta):
+	td_delta = td_delta.detach().numpy()
+	advantage_list = []
+	advantage = 0.0
+	for delta in td_delta[::-1]:
+		advantage = gamma * lmbda * advantage + delta
+		advantage_list.append(advantage)
+	advantage_list.reverse()
+	return torch.tensor(advantage_list, dtype=torch.float)

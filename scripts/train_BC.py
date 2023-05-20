@@ -9,8 +9,8 @@ os.sys.path.insert(0, parentdir)
 os.sys.path.insert(0, os.path.dirname(parentdir))
 
 
-from evaluate import evaluation
-from dataloader import SamaplesDataset
+from evaluate import *
+from dataloader import SamaplesDataset, TrajectoryDataset
 from args import get_args
 from agents.bc.bc_agent import BC
 from torch.utils.data import DataLoader
@@ -18,12 +18,18 @@ from tqdm import *
 
 
 def train(model, dataLoader, args):
-	optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
+	optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)
 	scheduler = torch.optim.lr_scheduler.StepLR(optimizer, step_size=1, gamma=0.9)
+	env_list = Parallel_env(len = 16)
 	Mx_Reward = 0
-	dir = os.path.join(args.save_dir, "BC")
-	if not os.path.exists(dir):
-		os.makedirs(dir)
+	idx = 0
+	dir = os.path.join(args.save_dir, "BC", str(idx))
+	while os.path.exists(dir):
+		idx += 1
+		dir = os.path.join(args.save_dir, "BC", str(idx))
+	os.makedirs(dir)
+	with open(os.path.join(dir, "args.txt"), "w") as f:
+		f.write(str(args))
 	for epoch in trange(args.n_epochs):
 		with tqdm(total = len(dataLoader)) as pbar:
 			for batch in dataLoader:
@@ -41,7 +47,8 @@ def train(model, dataLoader, args):
 				pbar.set_postfix(loss=loss.item())
 				pbar.update(1)
 				# Print loss
-		Reward, episodes_len = evaluation(model)
+		model_list = Parallel_model(model, len(env_list), device = args.device)
+		Reward, episodes_len = evaluation(model_list, env_list)
 		if Reward> Mx_Reward:
 			torch.save(model.state_dict(), os.path.join(dir, "BC_best.pth"))
 			Mx_Reward = Reward
@@ -52,11 +59,13 @@ def train(model, dataLoader, args):
 
 if __name__ == "__main__":
 	args = get_args()
-	dataset = SamaplesDataset(args.dataset_path, args.file_name)
+	dataset = TrajectoryDataset(args.dataset_path, args.file_name, args.trajectory_truncation)
+	dataset = SamaplesDataset.from_traj(dataset)
+
 	dataLoader = DataLoader(
 		dataset,
 		batch_size=args.batch_size,
 		shuffle = True
 	)
-	model = BC(state_dim=11, action_dim=3, hidden_dim=128).to(args.device)
+	model = BC(state_dim=11, action_dim=3, hidden_dim=args.hidden_dim).to(args.device)
 	train(model, dataLoader, args)

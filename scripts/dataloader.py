@@ -7,7 +7,7 @@ class SamaplesDataset(Dataset):
 	def __init__(self, dataset_path, file_name):
 		if dataset_path == "":
 			return
-		self.keys = ["action", "next_state", "not_done", "reward", "state"]
+		self.keys = ["state", "next_state", "action",  "reward" , "not_done"]
 		self.samples = {}
 		for key in self.keys:
 			self.samples[key] = np.load(os.path.join(dataset_path, file_name + "_" + key + ".npy"))
@@ -34,6 +34,19 @@ class SamaplesDataset(Dataset):
 			dataset.samples["not_done"] = 1 - dataset.samples["done"]
 
 		return dataset
+	@staticmethod
+	def from_traj(Trajectory):
+		dataset = SamaplesDataset("", "")
+		dataset.keys = Trajectory.keys
+		dataset.samples = {}
+		for Traj in Trajectory.Trajectories:
+			for pair in Traj:
+				for i, key in enumerate(dataset.keys):
+					if key not in dataset.samples:
+						dataset.samples[key] = []
+					dataset.samples[key].append(pair[i])
+				
+		return dataset
 
 	def __len__(self):
 		return len(self.samples['state'])
@@ -43,7 +56,7 @@ class SamaplesDataset(Dataset):
 
 class TrajectoryDataset(Dataset):
 	def __init__(self, dataset_path, file_name, truncation = 0):
-		self.keys = ["action", "next_state", "not_done", "reward", "state"]
+		self.keys = ["state", "next_state", "action",  "reward" , "not_done"]
 		samples = {}
 		for key in self.keys:
 			samples[key] = np.load(os.path.join(dataset_path, file_name + "_" + key + ".npy"))
@@ -65,7 +78,6 @@ class TrajectoryDataset(Dataset):
 
 				if truncation > 0:
 					Traj = Traj[:-int(truncation * len(Traj))]
-					Traj[-1][4] = 0
 				self.Trajectories.append(Traj)
 				Traj = []
 		print("Before Truncation:")

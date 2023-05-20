@@ -14,10 +14,11 @@ def get_args(algo="bc"):
 	parser.add_argument('--wd', default=0, type = float, help='Weight decay for training')
 	parser.add_argument("--device", default="cuda", help="Device to run on")
 	parser.add_argument("--save_dir", default="models", help="Directory to save models")
+	parser.add_argument('-t', '--trajectory_truncation', default=0., type=float, help='Trajectory truncation for BAIL')
+	parser.add_argument('-r', '--rollout', default=1000, type = int, help='Rollout length for MC estimation')
+	parser.add_argument('-g', '--gamma', default=0.99, type = float, help='Discount factor')
+
 	if algo == "bail":  # BAIL
-		parser.add_argument('-t', '--trajectory_truncation', default=0., type=float, help='Trajectory truncation for BAIL')
-		parser.add_argument('-r', '--rollout', default=1000, type = int, help='Rollout length for MC estimation')
-		parser.add_argument('-g', '--gamma', default=0.99, type = float, help='Discount factor')
 		parser.add_argument('-a', '--augment_mc', default="gain", help='Augmentation method for MC estimation')
 		parser.add_argument('-u', '--ue_n_epochs', default=50, type = int, help='Number of epochs to train upper envelope for')
 		parser.add_argument('--ue_lr', default=3e-3, type = float, help='Learning rate for training upper envelope')
