@@ -9,7 +9,7 @@ os.sys.path.insert(0, parentdir)
 os.sys.path.insert(0, os.path.dirname(parentdir))
 
 
-from evaluate import evaluation
+from evaluate import Evaluator
 from dataloader import SamaplesDataset
 from args import get_args
 from agents.CQL.cql_agent import CQL
