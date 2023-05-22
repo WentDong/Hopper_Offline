@@ -10,12 +10,12 @@ os.sys.path.insert(0, os.path.dirname(parentdir))
 
 
 from evaluate import Evaluator
-from dataloader import SamaplesDataset
+from dataloader import SamaplesDataset, TrajectoryDataset
 from args import get_args
 from agents.CQL.cql_agent import CQL
 from agents.CQL.cql_train import cql_train
+from agents.CQL.cql_dataset import cql_dataset
 from torch.utils.data import DataLoader
-from tqdm import *
 
 
 def train(dataLoader, args):
@@ -24,9 +24,11 @@ def train(dataLoader, args):
 if __name__ == "__main__":
 	args = get_args()
 	dataset = SamaplesDataset(args.dataset_path, args.file_name)
+	dataset = cql_dataset(dataset,if_clip = True, truncation = 0.1)
+
 	dataLoader = DataLoader(
 		dataset,
 		batch_size=args.batch_size,
-		shuffle = True
+		shuffle = True,
 	)
 	train(dataLoader, args)

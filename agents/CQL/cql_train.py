@@ -6,8 +6,6 @@ parentdir = os.path.dirname(currentdir)
 os.sys.path.insert(0, parentdir)
 os.sys.path.insert(0, os.path.dirname(parentdir))
 from tqdm import *
-import gym
-from env.chooseenv import make
 
 import torch
 import torch.nn as nn
@@ -19,10 +17,10 @@ from scripts.evaluate import Evaluator
 # train & evaluate
 def cql_train(dataLoader, args):
     '''设置参数'''
-    batch_num = len(dataLoader)
+    # batch_num = len(dataLoader)
     beta = 5.0
     num_random = 5
-    num_trains_per_train_loop = len(dataLoader)
+    # num_trains_per_train_loop = len(dataLoader)
     actor_lr = 3e-4
     critic_lr = 3e-3
     alpha_lr = 3e-4
@@ -32,6 +30,9 @@ def cql_train(dataLoader, args):
     tau = 0.005  # 软更新参数
     batch_size = 64
     action_bound = 1
+    n_epochs = 60
+    '''****************hyper-parameters*****************'''
+
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     target_entropy = -np.prod(3).item()
     Eval = Evaluator(device = device)
@@ -41,7 +42,7 @@ def cql_train(dataLoader, args):
             gamma = gamma, device = device, beta=beta, num_random=num_random)
 
     max_reward = 0
-    for epoch in trange(args.n_epochs):
+    for epoch in trange(n_epochs):
         with tqdm(total = len(dataLoader)) as pbar:
             for batch in dataLoader:
 			    # data = [batch['state'], batch['action'], batch['reward'], batch['next_state'], 1-batch['not_done']]
@@ -52,12 +53,21 @@ def cql_train(dataLoader, args):
         
         # evaluate and save actor model
         actor = agent.actor
+        critic_1 = agent.critic_1; critic_2 = agent.critic_2
+        target_critic_1 = agent.target_critic_1; target_critic_2 = agent.target_critic_2
+        log_alpha = agent.log_alpha
+
         rewards, total_steps = Eval.evaluate(actor)
         print('Epoch:{}, rewards:{}, total_steps:{}'.format(epoch, rewards, total_steps))
         if rewards > max_reward:
             print("save new model")
             max_reward = rewards
             torch.save(actor.state_dict(), os.path.join(parentdir, "CQL", "actor.pth"))
+            torch.save(critic_1.state_dict(), os.path.join(parentdir, "CQL", "critic_1.pth"))
+            torch.save(critic_2.state_dict(), os.path.join(parentdir, "CQL", "critic_2.pth"))
+            torch.save(target_critic_1.state_dict(), os.path.join(parentdir, "CQL", "target_critic_1.pth"))
+            torch.save(target_critic_2.state_dict(), os.path.join(parentdir, "CQL", "target_critic_2.pth"))
+            torch.save(log_alpha, os.path.join(parentdir, "CQL", "log_alpha.pth"))
 
 
 
