@@ -132,7 +132,7 @@ def train(model, replay_buffer, args):
 		# tqdm.set_description("Epoch: {}, Reward: {}".format(epoch, Reward))
 		print("###############################################")
 		print("Epoch: {}, Reward: {}, Mean Episodes Length: {}".format(epoch, Reward, episodes_len))
-	pass
+
 
 if __name__ == "__main__":
 	args = get_args("bail")
