@@ -57,7 +57,7 @@ def train(model, dataLoader, args):
 			Mx_Reward = Reward
 		torch.save(model.state_dict(), os.path.join(dir, f"BCQ_{epoch%10}.pth"))
 		print("Epoch: {}, Reward: {}, Mean Episodes Length: {}".format(epoch, Reward, episodes_len))
-
+		print("####################################")
 if __name__ == "__main__":
 	args = get_args()
 	model = BCQ(device = args.device).to(args.device)
