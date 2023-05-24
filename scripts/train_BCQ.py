@@ -60,7 +60,7 @@ def train(model, dataLoader, args):
 
 if __name__ == "__main__":
 	args = get_args()
-	model = BCQ(device = args.device)
+	model = BCQ(device = args.device).to(args.device)
 	dataset = TrajectoryDataset(args.dataset_path, args.file_name, args.trajectory_truncation)
 	dataset = SamaplesDataset.from_traj(dataset)
 	dataLoader = DataLoader(
