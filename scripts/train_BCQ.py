@@ -15,15 +15,15 @@ from tqdm import *
 from evaluate import *
 from torch.utils.tensorboard import SummaryWriter
 
-def train(model, dataLoader, args):
+def train(model, dataLoader, args, algo = "BCQ"):
 	eval = Evaluator(device =  args.device)
 	Mx_Reward = 0
 	idx =  0
 	steps = 0
-	dir = os.path.join(args.save_dir, "BCQ", str(idx))
+	dir = os.path.join(args.save_dir, algo, str(idx))
 	while os.path.exists(dir):
 		idx += 1
-		dir = os.path.join(args.save_dir, "BCQ", str(idx))
+		dir = os.path.join(args.save_dir, algo, str(idx))
 	os.makedirs(dir)
 	with open(os.path.join(dir, "args.txt"), "w") as f:
 		f.write(str(args))
@@ -33,6 +33,7 @@ def train(model, dataLoader, args):
 		with tqdm(total = len(dataLoader)) as pbar:
 			for batch in dataLoader:
 				# Get data
+				# print(batch.keys())
 				state = batch['state'].float().to(args.device)
 
 				action = batch['action'].float().to(args.device)
@@ -53,9 +54,9 @@ def train(model, dataLoader, args):
 		
 		Reward, episodes_len = eval.evaluate(model)
 		if Reward> Mx_Reward:
-			torch.save(model.state_dict(), os.path.join(dir, "BCQ_best.pth"))
+			torch.save(model.state_dict(), os.path.join(dir, algo+"_best.pth"))
 			Mx_Reward = Reward
-		torch.save(model.state_dict(), os.path.join(dir, f"BCQ_{epoch%10}.pth"))
+		torch.save(model.state_dict(), os.path.join(dir, algo+f"_{epoch%10}.pth"))
 		print("Epoch: {}, Reward: {}, Mean Episodes Length: {}".format(epoch, Reward, episodes_len))
 		print("####################################")
 if __name__ == "__main__":

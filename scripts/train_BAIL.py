@@ -63,6 +63,7 @@ def train_ue(states, returns, args):
 def select_batch_ue(replay_buffer, states, returns, upper_envelope, C, args):
     states = torch.from_numpy(states).to(device)
     returns = torch.from_numpy(returns).to(device)
+    
     upper_envelope = upper_envelope.to(device)
 
     ratios = []
@@ -82,8 +83,8 @@ def select_batch_ue(replay_buffer, states, returns, upper_envelope, C, args):
     for i in range(states.shape[0]):
         rat = ratios[i]
         if rat >= border:
-            obs, _, act, _, _ = replay_buffer.index(i)
-            selected_buffer.add((obs, None, act, None, None))
+            obs, next_obs, act, reward, done = replay_buffer.index(i)
+            selected_buffer.add((obs, next_obs, act, reward, done))
 
     initial_len, selected_len = replay_buffer.get_length(), selected_buffer.get_length()
     print('border:', border, 'selecting ratio:', selected_len, '/', initial_len)

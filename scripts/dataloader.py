@@ -32,7 +32,7 @@ class SamaplesDataset(Dataset):
 			dataset.samples[key] = np.array(dataset.samples[key])
 		if "done" in dataset.samples:
 			dataset.samples["not_done"] = 1 - dataset.samples["done"]
-
+			dataset.keys.append("not_done")
 		return dataset
 	@staticmethod
 	def from_traj(Trajectory):
