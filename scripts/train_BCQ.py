@@ -60,7 +60,7 @@ def train(model, dataLoader, args, algo = "BCQ"):
 		print("Epoch: {}, Reward: {}, Mean Episodes Length: {}".format(epoch, Reward, episodes_len))
 		print("####################################")
 if __name__ == "__main__":
-	args = get_args()
+	args = get_args("bcq")
 	model = BCQ(device = args.device, gamma = args.gamma, latent_dim = args.latent_dim, lr = args.lr, lr_critic = args.lr_critic).to(args.device)
 	dataset = TrajectoryDataset(args.dataset_path, args.file_name, args.trajectory_truncation)
 	dataset = SamaplesDataset.from_traj(dataset)
