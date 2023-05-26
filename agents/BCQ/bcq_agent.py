@@ -83,8 +83,9 @@ class Critic(nn.Module):
 		return self.Q1(torch.cat([states, actions], 1))
 	
 class BCQ(nn.Module):
-	def __init__(self, state_dim=11, action_dim=3, latent_dim=10, hidden_dim_VAE=[750,750], hidden_dim_Q = [400,300], Phi = 0.05, lambd = 0.7, tau = 0.005,device = 'cpu', lr=1e-3, lr_critic=None):
+	def __init__(self, gamma=0.99, state_dim=11, action_dim=3, latent_dim=10, hidden_dim_VAE=[750,750], hidden_dim_Q = [400,300], Phi = 0.05, lambd = 0.7, tau = 0.005,device = 'cpu', lr=1e-3, lr_critic=None):
 		super(BCQ, self).__init__()
+		self.gamma = gamma
 		self.state_dim = state_dim
 		self.action_dim = action_dim
 		self.latent_dim = latent_dim
@@ -116,15 +117,20 @@ class BCQ(nn.Module):
 		ret = torch.gather(actions.reshape(bs,-1,self.action_dim), 1, idx).squeeze()
 		return ret
 
-	def train(self, states, actions, next_states, rewards, not_dones):
+	def train(self, states, actions, next_states, rewards, not_dones, select=None):
 		Recon, mu, std = self.VAE_net(states, actions)
-		Recon_loss = nn.functional.mse_loss(actions, Recon)
-		KL_loss = -0.5 * torch.mean(1 + torch.log(std.pow(2)) - mu.pow(2) - std.pow(2))
+		Recon_loss = nn.functional.mse_loss(actions, Recon, reduction='none').mean(-1)
+		KL_loss = -0.5 * (1 + torch.log(std.pow(2)) - mu.pow(2) - std.pow(2)).mean(-1)
 		VAE_loss = Recon_loss + KL_loss / 2
+		if select is not None:
+			VAE_loss = VAE_loss[select.bool()]
+		VAE_loss = VAE_loss.mean()
+		KL_loss = KL_loss.mean()
+		Recon_loss = Recon_loss.mean()
 		self.VAE_optim.zero_grad()
 		VAE_loss.backward()
 		self.VAE_optim.step()
-
+		
 		q1, q2 = self.Critic_net(states, actions)
 
 		with torch.no_grad():
@@ -138,7 +144,7 @@ class BCQ(nn.Module):
 			target_Q = self.lambd * torch.min(target_Q1, target_Q2) + (1 - self.lambd) * torch.max(target_Q1, target_Q2)
 			# print("CCC", target_Q.reshape(64,-1).max(1)[0].shape)
 			target_Q = target_Q.reshape(states.shape[0], -1).max(1)[0].reshape(-1,1)
-			target_Q = rewards + not_dones * target_Q
+			target_Q = rewards + not_dones * target_Q * self.gamma
 		
 		Critic_loss = nn.functional.mse_loss(q1, target_Q) + nn.functional.mse_loss(q2, target_Q)
 		self.Critic_optim.zero_grad()
