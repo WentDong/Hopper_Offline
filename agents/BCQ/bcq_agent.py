@@ -83,7 +83,7 @@ class Critic(nn.Module):
 		return self.Q1(torch.cat([states, actions], 1))
 	
 class BCQ(nn.Module):
-	def __init__(self, state_dim=11, action_dim=3, latent_dim=10, hidden_dim_VAE=[750,750], hidden_dim_Q = [400,300], Phi = 0.05, lambd = 0.7, tau = 0.005,device = 'cpu', lr=1e-3):
+	def __init__(self, state_dim=11, action_dim=3, latent_dim=10, hidden_dim_VAE=[750,750], hidden_dim_Q = [400,300], Phi = 0.05, lambd = 0.7, tau = 0.005,device = 'cpu', lr=1e-3, lr_critic=None):
 		super(BCQ, self).__init__()
 		self.state_dim = state_dim
 		self.action_dim = action_dim
@@ -102,7 +102,7 @@ class BCQ(nn.Module):
 
 		self.VAE_optim = torch.optim.AdamW(self.VAE_net.parameters(), lr = lr)
 		self.Actor_disturb_optim = torch.optim.AdamW(self.Actor_disturb_net.parameters(), lr = lr)
-		self.Critic_optim = torch.optim.AdamW(self.Critic_net.parameters(), lr = lr)
+		self.Critic_optim = torch.optim.AdamW(self.Critic_net.parameters(), lr = lr_critic if lr_critic is not None else lr)
 		
 	def forward(self, states):
 		batch_states = states.reshape(-1,self.state_dim).repeat_interleave(self.n_samples, 0)

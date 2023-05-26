@@ -61,7 +61,7 @@ def train(model, dataLoader, args, algo = "BCQ"):
 		print("####################################")
 if __name__ == "__main__":
 	args = get_args()
-	model = BCQ(device = args.device).to(args.device)
+	model = BCQ(device = args.device, latent_dim = args.latent_dim, lr = args.lr, lr_critic = args.lr_critic).to(args.device)
 	dataset = TrajectoryDataset(args.dataset_path, args.file_name, args.trajectory_truncation)
 	dataset = SamaplesDataset.from_traj(dataset)
 	dataLoader = DataLoader(

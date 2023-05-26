@@ -1,4 +1,5 @@
 import argparse
+import torch
 
 def get_args(algo="bc"):
 	"""Get command line arguments"""
@@ -19,7 +20,7 @@ def get_args(algo="bc"):
 	parser.add_argument('-r', '--rollout', default=1000, type = int, help='Rollout length for MC estimation')
 	parser.add_argument('-g', '--gamma', default=0.99, type = float, help='Discount factor')
 
-	if algo == "bail":  # BAIL
+	if algo in ["bail", "babcq"]:  # BAIL
 		parser.add_argument('-a', '--augment_mc', default="gain", help='Augmentation method for MC estimation')
 		parser.add_argument('-u', '--ue_n_epochs', default=50, type = int, help='Number of epochs to train upper envelope for')
 		parser.add_argument('--ue_lr', default=3e-3, type = float, help='Learning rate for training upper envelope')
@@ -29,14 +30,18 @@ def get_args(algo="bc"):
 		parser.add_argument('-k', '--ue_loss_k', default=1000, type = int, help='Soft constraint for upper envelope loss')
 		parser.add_argument('-p', '--select_percentage', default=0.25, type=float, help='Percentage of data to select')
 		parser.add_argument('--max_timesteps', default=int(2e6), type = int, help='Max time steps to run environment for')
+	if algo in ["bcq", "babcq"]:  # BCQ
+		parser.add_argument('--lr_critic', default=1e-3, type = float, help='Learning rate for training critic')
+		parser.add_argument('--latent_dim', default=6, type = int, help='Latent dimension for BCQ')
 	args = parser.parse_args()
 
-	if algo == "bail":
+	if algo in ["bail", "babcq"]:
 		args.setting_name = "%s_r%s_g%s_t%s" % (args.file_name, args.rollout, args.gamma, args.trajectory_truncation)
 		args.setting_name += '_noaug' if not (args.augment_mc) else ''
 		args.setting_name += '_augNew' if args.augment_mc == 'new' else ''
 		args.data_name = args.setting_name
 		args.data_name += '_Gain' if args.augment_mc == 'gain' else '_Gt'
 		args.ue_setting = 'Stat_' + args.setting_name + '_lossk%s' % args.ue_loss_k
+	args.device = "cuda" if args.device == "cuda" and torch.cuda.is_available() else "cpu"
 
 	return args

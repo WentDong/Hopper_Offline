@@ -22,7 +22,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 from train_BCQ import train
 
 if __name__ == "__main__":
-	args = get_args("bail")
+	args = get_args("babcq")
 
 	replay_buffer = utils.ReplayBuffer()
 	replay_buffer.load(args.dataset_path, args.file_name, args.trajectory_truncation)
@@ -36,5 +36,5 @@ if __name__ == "__main__":
 	dataset = SamaplesDataset.from_buffer(selected_buffer)
 	dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
 	
-	model = BCQ(device = device, lr = args.lr).to(device)
+	model = BCQ(device = device, latent_dim = args.latent_dim, lr = args.lr, lr_critic = args.lr_critic).to(device)
 	train(model, dataloader, args, "BABCQ")
