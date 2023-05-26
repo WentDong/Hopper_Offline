@@ -13,15 +13,15 @@ from evaluate import *
 from dataloader import TrajectoryDataset
 from args import get_args
 from agents.AWR.AWR_agent import AWR
-from utils import Mount_Carlo_Estimation, Traj_Replay_Buffer
+from utils import Mount_Carlo_Estimation, Traj_Replay_Buffer, compute_advantage
 # from agents.bail import utils
 from torch.utils.data import DataLoader
 from tqdm import *
 from torch.utils.tensorboard import SummaryWriter
 
 def train(model, replay_buffer, args):
-	actor_optim = torch.optim.AdamW(model.actor.parameters(), lr=1e-3)
-	critic_optim = torch.optim.AdamW(model.critic.parameters(), lr=1e-1)
+	actor_optim = torch.optim.AdamW(model.actor.parameters(), lr=args.lr)
+	critic_optim = torch.optim.AdamW(model.critic.parameters(), lr=args.lr)
 	writer = SummaryWriter()
 	step = 0	
 	Trajs_per_iter = 128
@@ -63,13 +63,19 @@ def train(model, replay_buffer, args):
 					dones = torch.tensor(dones, device = args.device).float()
 					# print(rewards.shape, dones.shape, actions.shape)
 
-					critic_loss = torch.nn.functional.mse_loss(model.critic(states), returns, reduction='mean')
+					td_target = rewards + model.gamma * model.critic(next_states).detach() * (1-dones)
+					td_delta = td_target - model.critic(states).detach()
+					advantage = compute_advantage(model.gamma, model.lamb, td_delta)
+
+					critic_loss = torch.nn.functional.mse_loss(model.critic(states), td_target, reduction='mean')
+					# critic_loss = torch.nn.functional.mse_loss(model.critic(states), returns, reduction='mean')
 					critic_optim.zero_grad()
 					critic_loss.backward()
 					critic_optim.step()
 					
-					td_target = returns
-					advantage = td_target - model.critic(states).detach() 
+					
+					# td_target = returns
+					# advantage = td_target - model.critic(states).detach() 
 					weight = torch.clamp(torch.exp(1/model.beta * advantage), max=20)
 					actor_loss = ((model.actor(states) - actions)**2) * weight
 					actor_loss = torch.mean(actor_loss, dim = 1)
@@ -81,7 +87,7 @@ def train(model, replay_buffer, args):
 					writer.add_scalar('actor_loss', actor_loss, step)
 					writer.add_scalar('critic_loss', critic_loss, step)
 					pbar.set_description("Epoch: {}".format(epoch))
-					pbar.set_postfix(actor_loss=actor_loss.item(), critic_loss=critic_loss.item(), weight = weight[0], advantage = advantage[0])
+					pbar.set_postfix(actor_loss=actor_loss.item(), critic_loss=critic_loss.item(), weight = weight[0].item(), advantage = advantage[0].item())
 					pbar.update(1)
 					step += 1
 
@@ -131,12 +137,14 @@ def train(model, replay_buffer, args):
 			torch.save(model.state_dict(), os.path.join(dir, "AWR_best.pth"))
 		# tqdm.set_description("Epoch: {}, Reward: {}".format(epoch, Reward))
 		print("###############################################")
+		with open(os.path.join(dir, "log.txt"), "a") as f:
+			f.write("Epoch: {}, Reward: {}, Mean Episodes Length: {}\n".format(epoch, Reward, episodes_len))
 		print("Epoch: {}, Reward: {}, Mean Episodes Length: {}".format(epoch, Reward, episodes_len))
 
 
 if __name__ == "__main__":
 	args = get_args("bail")
-	Traj_dataset = TrajectoryDataset(args.dataset_path, args.file_name, args.trajectory_truncation)
+	Traj_dataset = TrajectoryDataset(args.dataset_path, args.file_name, args.trajectory_truncation, Threshold=args.len_threshold)
 	replay_buffer = Traj_Replay_Buffer()
 	replay_buffer.load(Traj_dataset)
 

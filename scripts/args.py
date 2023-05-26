@@ -15,6 +15,7 @@ def get_args(algo="bc"):
 	parser.add_argument("--device", default="cuda", help="Device to run on")
 	parser.add_argument("--save_dir", default="models", help="Directory to save models")
 	parser.add_argument('-t', '--trajectory_truncation', default=0., type=float, help='Trajectory truncation for BAIL')
+	parser.add_argument("--len_threshold", default = 100, type = int, help="Length threshold for trajectories, only those longer than threshold will be stored")
 	parser.add_argument('-r', '--rollout', default=1000, type = int, help='Rollout length for MC estimation')
 	parser.add_argument('-g', '--gamma', default=0.99, type = float, help='Discount factor')
 
