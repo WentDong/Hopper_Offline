@@ -104,9 +104,9 @@ class BCQ(nn.Module):
 		self.VAE_optim = torch.optim.AdamW(self.VAE_net.parameters(), lr = lr)
 		self.Actor_disturb_optim = torch.optim.AdamW(self.Actor_disturb_net.parameters(), lr = lr)
 		self.Critic_optim = torch.optim.AdamW(self.Critic_net.parameters(), lr = lr_critic if lr_critic is not None else lr)
-		self.VAE_sched = torch.optim.lr_scheduler.ReduceLROnPlateau(self.VAE_optim, mode='min', factor=0.5, patience=10, verbose=True)
-		self.Actor_disturb_sched = torch.optim.lr_scheduler.ReduceLROnPlateau(self.Actor_disturb_optim, mode='min', factor=0.5, patience=10, verbose=True)
-		self.Critic_sched = torch.optim.lr_scheduler.ReduceLROnPlateau(self.Critic_optim, mode='min', factor=0.5, patience=10, verbose=True)
+		self.VAE_sched = torch.optim.lr_scheduler.ReduceLROnPlateau(self.VAE_optim, mode='min', factor=0.5, patience=10000, verbose=True)
+		self.Actor_disturb_sched = torch.optim.lr_scheduler.ReduceLROnPlateau(self.Actor_disturb_optim, mode='min', factor=0.5, patience=10000, verbose=True)
+		self.Critic_sched = torch.optim.lr_scheduler.ReduceLROnPlateau(self.Critic_optim, mode='min', factor=0.5, patience=10000, verbose=True)
 		
 	def forward(self, states):
 		batch_states = states.reshape(-1,self.state_dim).repeat_interleave(self.n_samples, 0)
