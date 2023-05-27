@@ -7,7 +7,7 @@ base_dir = Path(__file__).resolve().parent
 sys.path.append(str(base_dir))
 from bcq_agent import BCQ
 
-agent = BCQ()
+agent = BCQ(latent_dim=10)
 BCQ_net = os.path.dirname(os.path.abspath(__file__)) + "/BCQ_best.pth"
 state_dict=  torch.load(BCQ_net, map_location=torch.device('cpu'))
 agent.load_state_dict(state_dict)
