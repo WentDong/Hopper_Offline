@@ -18,26 +18,24 @@ from scripts.evaluate import Evaluator
 def cql_train(dataLoader, args):
     '''设置参数'''
     # batch_num = len(dataLoader)
-    beta = 5.0
-    num_random = 5
+    beta = args.cql_beta
+    num_random = args.cql_random_num    # the original try is 5
     # num_trains_per_train_loop = len(dataLoader)
-    actor_lr = 3e-4
-    critic_lr = 3e-3
-    alpha_lr = 3e-4
-    num_episodes = 100
-    hidden_dim = 128
-    gamma = 0.99
-    tau = 0.005  # 软更新参数
-    batch_size = 64
-    action_bound = 1
-    n_epochs = 60
+    actor_lr = args.cql_alr
+    critic_lr = args.cql_clr
+    alpha_lr = args.cql_alr
+    hidden_dim = args.cql_hidden_dim
+    gamma = args.gamma
+    tau = args.cql_tau  # 软更新参数
+    action_bound = args.cql_ac_bound
+    n_epochs = args.cql_n_epochs
     '''****************hyper-parameters*****************'''
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     target_entropy = -np.prod(3).item()
     Eval = Evaluator(device = device)
 
-    agent = CQL(state_dim=11, action_dim=3, hidden_dim=128, action_bound = action_bound, actor_lr = actor_lr,
+    agent = CQL(state_dim=11, action_dim=3, hidden_dim=hidden_dim, action_bound = action_bound, actor_lr = actor_lr,
             critic_lr = critic_lr, alpha_lr = alpha_lr, target_entropy = target_entropy, tau = tau,
             gamma = gamma, device = device, beta=beta, num_random=num_random)
 
