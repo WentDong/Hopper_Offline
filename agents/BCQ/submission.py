@@ -9,7 +9,7 @@ from bcq_agent import BCQ
 
 agent = BCQ()
 BCQ_net = os.path.dirname(os.path.abspath(__file__)) + "/BCQ_best.pth"
-state_dict=  torch.load(BCQ_net)
+state_dict=  torch.load(BCQ_net, map_location=torch.device('cpu'))
 agent.load_state_dict(state_dict)
 def my_controller(observation, action_space, is_act_continuous=True):
     action = agent.take_action(observation['obs'])
