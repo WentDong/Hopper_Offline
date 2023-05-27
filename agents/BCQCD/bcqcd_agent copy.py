@@ -119,13 +119,13 @@ class BCQCD(nn.Module):
 			assert self.countdown > 0
 			countdowns = torch.full((states.shape[0], 1), self.countdown, device=self.device).float()
 			self.countdown -= 1
-		countdowns /= 1000
+		inv_countdowns = 1 / countdowns
 		batch_states = states.repeat_interleave(self.n_samples, 0)
-		batch_countdowns = countdowns.repeat_interleave(self.n_samples, 0)
+		batch_inv_countdowns = inv_countdowns.repeat_interleave(self.n_samples, 0)
 		bs = batch_states.shape[0]//self.n_samples
-		actions = self.VAE_net.call_samples(batch_states, batch_countdowns)
-		actions = self.Actor_disturb_net(batch_states, batch_countdowns, actions)
-		Q1, Q2 = self.Critic_net(batch_states, batch_countdowns, actions)
+		actions = self.VAE_net.call_samples(batch_states, batch_inv_countdowns)
+		actions = self.Actor_disturb_net(batch_states, batch_inv_countdowns, actions)
+		Q1, Q2 = self.Critic_net(batch_states, batch_inv_countdowns, actions)
 		Q = torch.min(Q1, Q2)
 		idx = Q.reshape((bs, -1)).max(1)[1]
 		idx = idx.reshape(-1,1,1).expand(-1, -1, self.action_dim)
@@ -136,8 +136,9 @@ class BCQCD(nn.Module):
 		if countdowns is None:
 			countdowns = torch.full((states.shape[0], 1), self.countdown, device=self.device).float()
 			self.countdown -= 1
-		countdowns /= 1000
-		Recon, mu, std = self.VAE_net(states, countdowns, actions)
+		inv_countdowns = 1 / countdowns
+
+		Recon, mu, std = self.VAE_net(states, inv_countdowns, actions)
 		Recon_loss = nn.functional.mse_loss(actions, Recon, reduction='none').mean(-1)
 		KL_loss = -0.5 * (1 + torch.log(std.pow(2)) - mu.pow(2) - std.pow(2)).mean(-1)
 		VAE_loss = Recon_loss + KL_loss / 2
@@ -151,16 +152,16 @@ class BCQCD(nn.Module):
 		self.VAE_optim.step()
 		self.VAE_sched.step(VAE_loss)
 		
-		q1, q2 = self.Critic_net(states, countdowns, actions)
+		q1, q2 = self.Critic_net(states, inv_countdowns, actions)
 
 		with torch.no_grad():
 			Repeat_Next_States = next_states.repeat_interleave(self.n_samples, 0) # ((n x B), 11),  [B, B, ..., B]^T
-			Repeat_Next_Countdowns = countdowns.repeat_interleave(self.n_samples, 0) - 1 + 1e-30# ((n x B), 1),  [B, B, ..., B]^T
-			sample_actions = self.VAE_net.call_samples(Repeat_Next_States, Repeat_Next_Countdowns).detach()
-			sample_actions = self.Actor_disturb_target(Repeat_Next_States, Repeat_Next_Countdowns, sample_actions)
+			Repeat_Next_Inv_Countdowns = 1 / (countdowns.repeat_interleave(self.n_samples, 0) - 1 + 1e-30)# ((n x B), 1),  [B, B, ..., B]^T
+			sample_actions = self.VAE_net.call_samples(Repeat_Next_States, Repeat_Next_Inv_Countdowns).detach()
+			sample_actions = self.Actor_disturb_target(Repeat_Next_States, Repeat_Next_Inv_Countdowns, sample_actions)
 
 			# print("AAA", sample_actions.shape)
-			target_Q1, target_Q2 = self.Critic_target(Repeat_Next_States, Repeat_Next_Countdowns, sample_actions)
+			target_Q1, target_Q2 = self.Critic_target(Repeat_Next_States, Repeat_Next_Inv_Countdowns, sample_actions)
 			# print("BBB:", target_Q1.shape)
 			target_Q = self.lambd * torch.min(target_Q1, target_Q2) + (1 - self.lambd) * torch.max(target_Q1, target_Q2)
 			# print("CCC", target_Q.reshape(64,-1).max(1)[0].shape)
@@ -173,9 +174,9 @@ class BCQCD(nn.Module):
 		self.Critic_optim.step()
 		self.Critic_sched.step(Critic_loss)
 		
-		actor_samples = self.VAE_net.call_samples(states, countdowns)
-		actor_samples = self.Actor_disturb_net(states, countdowns, actor_samples)
-		Actor_loss = -self.Critic_net.call_single(states, countdowns, actor_samples).mean()
+		actor_samples = self.VAE_net.call_samples(states, inv_countdowns)
+		actor_samples = self.Actor_disturb_net(states, inv_countdowns, actor_samples)
+		Actor_loss = -self.Critic_net.call_single(states, inv_countdowns, actor_samples).mean()
 		self.Actor_disturb_optim.zero_grad()
 		Actor_loss.backward()
 		self.Actor_disturb_optim.step()

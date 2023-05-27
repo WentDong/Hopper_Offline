@@ -85,6 +85,8 @@ class Evaluator(object):
 
 	def eval(self, env, model):
 		state = env.reset()
+		if hasattr(model, "reset"):
+			model.reset(rollout = self.max_episodes_length)
 		Accumulate_Reward = 0
 		total_steps = 0
 		for _ in range(self.max_episodes_length):
@@ -113,6 +115,8 @@ class Evaluator(object):
 			num_envs = 20
 			for i in range(num_envs):
 				state = env.reset()
+				if hasattr(model, "reset"):
+					model.reset(rollout = self.max_episodes_length)
 				for _ in range(self.max_episodes_length):
 					total_steps += 1
 					action = model.take_action(state)
