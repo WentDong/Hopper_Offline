@@ -1,6 +1,7 @@
 import numpy as np
 import inspect
 import os
+import json
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
 parentdir = os.path.dirname(currentdir)
 os.sys.path.insert(0, parentdir)
@@ -13,6 +14,7 @@ import torch.nn.functional as F
 
 from agents.CQL.cql_agent import CQL
 from scripts.evaluate import Evaluator
+from scripts.utils import plot_eval
 
 # train & evaluate
 def cql_train(dataLoader, args):
@@ -30,6 +32,9 @@ def cql_train(dataLoader, args):
     action_bound = args.cql_ac_bound
     n_epochs = args.cql_n_epochs
     '''****************hyper-parameters*****************'''
+    Reward_log = []
+    steps = 0
+    step_interval = 64000
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     target_entropy = -np.prod(3).item()
@@ -48,6 +53,14 @@ def cql_train(dataLoader, args):
 		       						'rewards':batch['reward'], 'next_states':batch['next_state'], 'dones':1-batch['not_done']}
                 agent.update(transition_dict)
                 pbar.update(1)
+
+                steps += args.batch_size
+                if steps % step_interval == 0:
+                    Reward, episode_len = Eval.evaluate(agent.actor)
+                    Reward_log.append(Reward)
+        
+        Reward, episode_len = Eval.evaluate(agent.actor)
+         
         
         # evaluate and save actor model
         actor = agent.actor
@@ -60,74 +73,11 @@ def cql_train(dataLoader, args):
         if rewards > max_reward:
             print("save new model")
             max_reward = rewards
-            torch.save(actor.state_dict(), os.path.join(parentdir, "CQL", "actor.pth"))
-            torch.save(critic_1.state_dict(), os.path.join(parentdir, "CQL", "critic_1.pth"))
-            torch.save(critic_2.state_dict(), os.path.join(parentdir, "CQL", "critic_2.pth"))
-            torch.save(target_critic_1.state_dict(), os.path.join(parentdir, "CQL", "target_critic_1.pth"))
-            torch.save(target_critic_2.state_dict(), os.path.join(parentdir, "CQL", "target_critic_2.pth"))
-            torch.save(log_alpha, os.path.join(parentdir, "CQL", "log_alpha.pth"))
+            torch.save(actor.state_dict(), os.path.join(currentdir, "actor.pth"))
+            torch.save(critic_1.state_dict(), os.path.join(currentdir, "critic_1.pth"))
+            torch.save(critic_2.state_dict(), os.path.join(currentdir, "critic_2.pth"))
+            torch.save(target_critic_1.state_dict(), os.path.join(currentdir, "target_critic_1.pth"))
+            torch.save(target_critic_2.state_dict(), os.path.join(currentdir, "target_critic_2.pth"))
+            torch.save(log_alpha, os.path.join(currentdir, "log_alpha.pth"))
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# def cql_train(model, dataLoader, args):
-#     # env_name = ['classic_Acrobot-v1', 'gym_Hopper-v2']
-#     env_name = 'gym_Hopper-v2'
-#     env = make(env_name)
-#     print(env)
-
-#     optimizer = torch.optim.Adam(model.parameters(), lr=args.lr)
-#     Mx_Reward = 0
-#     dir = os.path.join(args.save_dir, "CQL")
-#     if not os.path.exists(dir):
-#         os.makedirs(dir)
-#     for epoch in trange(args.n_epochs):
-#         with tqdm(total = len(dataLoader)) as pbar:
-#             for batch in dataLoader:
-#                 print(batch.keys())
-#                 # Get data
-#                 transition_dict = {'states':batch['state'],'actions':batch['action'],
-#                                    'next_states':batch['next_state'], 'rewards':batch['reward'],
-#                                    'dones':batch['not_done']}
-#                 model.update(transition_dict)
-#                 # state = batch['state'].float().to(args.device)
-#                 # # print(state.shape, type(state))
-#                 # action = batch['action'].float().to(args.device)
-#                 # loss = model.train(state, action)
-                
-#                 # optimizer.zero_grad()
-#                 # loss.backward()
-#                 # # Update parameters
-#                 # optimizer.step()
-#                 pbar.set_description("Epoch: {}".format(epoch))
-#                 pbar.set_postfix(loss=loss.item())
-#                 pbar.update(1)
-#                 # Print loss
-#         Reward = cql_evaluation(model)
-#         if Reward> Mx_Reward:
-#             torch.save(model, os.path.join(dir, "CQL_best.pth"))
-
-#         torch.save(model, os.path.join(dir,"BC_{}.pth".format(epoch%10)))
-#         # tqdm.set_description("Epoch: {}, Reward: {}".format(epoch, Reward))
-#         print("Epoch: {}, Reward: {}".format(epoch, Reward))
-
-# def cql_evaluation(model):
-#     pass
+    return Reward_log

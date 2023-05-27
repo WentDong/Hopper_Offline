@@ -16,10 +16,15 @@ from agents.CQL.cql_agent import CQL
 from agents.CQL.cql_train import cql_train
 from agents.CQL.cql_dataset import cql_dataset
 from torch.utils.data import DataLoader
+from scripts.utils import plot_eval
 
 
 def train(dataLoader, args):
-	cql_train(dataLoader, args)
+	Reward_logs = []
+	for _ in range(5):
+		Reward_log = cql_train(dataLoader, args)
+		Reward_logs.append(Reward_log)
+	return Reward_logs
 
 if __name__ == "__main__":
 	args = get_args("cql")
@@ -31,4 +36,9 @@ if __name__ == "__main__":
 		batch_size=args.batch_size,
 		shuffle = True,
 	)
-	train(dataLoader, args)
+
+	step_interval = 64000
+	Reward_logs = train(dataLoader, args)
+	Reward_logs = np.array(Reward_logs)
+	np.save(os.path.join(args.save_dir, "CQL_Reward_logs.npy"), Reward_logs)
+	plot_eval(step_interval, Reward_logs, "CQL")    # I only use batch_size for plot_eval
