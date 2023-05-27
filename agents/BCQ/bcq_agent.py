@@ -104,7 +104,9 @@ class BCQ(nn.Module):
 		self.VAE_optim = torch.optim.AdamW(self.VAE_net.parameters(), lr = lr)
 		self.Actor_disturb_optim = torch.optim.AdamW(self.Actor_disturb_net.parameters(), lr = lr)
 		self.Critic_optim = torch.optim.AdamW(self.Critic_net.parameters(), lr = lr_critic if lr_critic is not None else lr)
-		
+		self.VAE_sched = torch.optim.lr_scheduler.ReduceLROnPlateau(self.VAE_optim, mode='min', factor=0.5, patience=10, verbose=True)
+		self.Actor_disturb_sched = torch.optim.lr_scheduler.ReduceLROnPlateau(self.Actor_disturb_optim, mode='min', factor=0.5, patience=10, verbose=True)
+		self.Critic_sched = torch.optim.lr_scheduler.ReduceLROnPlateau(self.Critic_optim, mode='min', factor=0.5, patience=10, verbose=True)
 		
 	def forward(self, states):
 		batch_states = states.reshape(-1,self.state_dim).repeat_interleave(self.n_samples, 0)
@@ -131,6 +133,7 @@ class BCQ(nn.Module):
 		self.VAE_optim.zero_grad()
 		VAE_loss.backward()
 		self.VAE_optim.step()
+		self.VAE_sched.step(VAE_loss)
 		
 		q1, q2 = self.Critic_net(states, actions)
 
@@ -151,6 +154,7 @@ class BCQ(nn.Module):
 		self.Critic_optim.zero_grad()
 		Critic_loss.backward()
 		self.Critic_optim.step()
+		self.Critic_sched.step(Critic_loss)
 		
 		actor_samples = self.VAE_net.call_samples(states)
 		actor_samples = self.Actor_disturb_net(states, actor_samples)
@@ -158,6 +162,7 @@ class BCQ(nn.Module):
 		self.Actor_disturb_optim.zero_grad()
 		Actor_loss.backward()
 		self.Actor_disturb_optim.step()
+		self.Actor_disturb_sched.step(Actor_loss)
 
 		for param, target_param in zip(self.Critic_net.parameters(), self.Critic_target.parameters()):
 			target_param.data.copy_(self.tau * param.data + (1 - self.tau) * target_param.data)
