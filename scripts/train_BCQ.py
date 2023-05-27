@@ -15,8 +15,8 @@ from torch.utils.data import DataLoader
 from tqdm import *
 from evaluate import *
 from torch.utils.tensorboard import SummaryWriter
-
-def train(model, dataLoader, args, step_interval, algo = "BCQ"):
+from utils import plot_eval
+def train(model, dataLoader, step_interval, args, algo = "BCQ"):
 	eval = Evaluator(device =  args.device)
 	Mx_Reward = 0
 	idx =  0
@@ -51,10 +51,10 @@ def train(model, dataLoader, args, step_interval, algo = "BCQ"):
 				writer.add_scalar("KL_loss", KL_loss, steps)
 				writer.add_scalar("Critic_loss", Critic_loss, steps)
 				writer.add_scalar("Actor_loss", Actor_loss, steps)
-				if steps % step_interval == 0:
+				if ((steps+len(state)) // step_interval)-steps//step_interval>0:
 					Reward, _ = eval.evaluate(model)
 					Reward_log.append(Reward)
-				steps += args.batch_size
+				steps += len(state)
 
 		
 		Reward, episodes_len = eval.evaluate(model)
@@ -66,6 +66,7 @@ def train(model, dataLoader, args, step_interval, algo = "BCQ"):
 		print("####################################")
 		with open(os.path.join(dir, "log.txt"), "a") as f:
 			f.write("Epoch: {}, Reward: {}, Mean Episodes Length: {}\n".format(epoch, Reward, episodes_len))
+	return Reward_log
 if __name__ == "__main__":
 	args = get_args("bcq")
 	dataset = TrajectoryDataset(args.dataset_path, args.file_name, args.trajectory_truncation)

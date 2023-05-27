@@ -32,7 +32,7 @@ def get_args(algo="bc"):
 		parser.add_argument('--max_timesteps', default=int(2e6), type = int, help='Max time steps to run environment for')
 	if algo in ["bcq", "babcq", "babcqcd"]:  # BCQ
 		parser.add_argument('--lr_critic', default=1e-3, type = float, help='Learning rate for training critic')
-		parser.add_argument('--latent_dim', default=6, type = int, help='Latent dimension for BCQ')
+		parser.add_argument('--latent_dim', default=10, type = int, help='Latent dimension for BCQ')
 	if algo == "cql":  # CQL
 		parser.add_argument('--cql_hidden_dim', default=128, type = int, help='CQL hidden dim')
 		parser.add_argument('--cql_alpha', default=1.0, type = float, help='CQL alpha')

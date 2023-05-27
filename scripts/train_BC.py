@@ -50,10 +50,10 @@ def train(model, dataLoader, step_interval, args):
 				pbar.set_description("Epoch: {}".format(epoch))
 				pbar.set_postfix(loss=loss.item())
 				pbar.update(1)
-				if steps % step_interval == 0:
+				if ((steps+len(state)) // step_interval)-steps//step_interval>0:
 					Reward, episodes_len = eval.evaluate(model)
 					Reward_log.append(Reward)
-				steps += args.batch_size
+				steps += len(state)
 
 				# Print loss
 		Reward, episodes_len = eval.evaluate(model)
