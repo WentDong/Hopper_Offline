@@ -82,9 +82,9 @@ class Critic(nn.Module):
 	def call_single(self, states, actions):
 		return self.Q1(torch.cat([states, actions], 1))
 	
-class BCQ(nn.Module):
-	def __init__(self, gamma=0.99, state_dim=11, action_dim=3, latent_dim=10, hidden_dim_VAE=[750,750], hidden_dim_Q = [400,300], Phi = 0.05, lambd = 0.7, tau = 0.005, device = 'cpu', lr=1e-3, lr_critic=None):
-		super(BCQ, self).__init__()
+class BCQCD(nn.Module):
+	def __init__(self, gamma=0.99, state_dim=11, action_dim=3, latent_dim=10, hidden_dim_VAE=[750,750], hidden_dim_Q = [400,300], Phi = 0.05, lambd = 0.7, tau = 0.005,device = 'cpu', lr=1e-3, rollout=1000, lr_critic=None):
+		super(BCQCD, self).__init__()
 		self.gamma = gamma
 		self.state_dim = state_dim
 		self.action_dim = action_dim
@@ -93,6 +93,8 @@ class BCQ(nn.Module):
 		self.device = device
 		self.lambd = lambd
 		self.tau = tau
+		self.rollout = rollout
+		self.countdown = rollout
 
 		self.VAE_net = VAE(state_dim, action_dim, hidden_dim_VAE, latent_dim, device)
 		self.Actor_disturb_net = Actor_disturb(state_dim, action_dim, hidden_dim_Q, Phi, device)
@@ -105,8 +107,9 @@ class BCQ(nn.Module):
 		self.Actor_disturb_optim = torch.optim.AdamW(self.Actor_disturb_net.parameters(), lr = lr)
 		self.Critic_optim = torch.optim.AdamW(self.Critic_net.parameters(), lr = lr_critic if lr_critic is not None else lr)
 		
-		
-	def forward(self, states):
+	def forward(self, states, countdown=None):
+		if countdown is None:
+			countdown = torch.full((states.shape[0], 1), self.countdown, device=self.device).float().inverse()
 		batch_states = states.reshape(-1,self.state_dim).repeat_interleave(self.n_samples, 0)
 		bs = batch_states.shape[0]//self.n_samples
 		actions = self.VAE_net.call_samples(batch_states)
@@ -118,7 +121,7 @@ class BCQ(nn.Module):
 		ret = torch.gather(actions.reshape(bs,-1,self.action_dim), 1, idx).squeeze()
 		return ret
 
-	def train(self, states, actions, next_states, rewards, not_dones, select=None):
+	def train(self, states, actions, next_states, rewards, not_dones, select=None, countdown=None):
 		Recon, mu, std = self.VAE_net(states, actions)
 		Recon_loss = nn.functional.mse_loss(actions, Recon, reduction='none').mean(-1)
 		KL_loss = -0.5 * (1 + torch.log(std.pow(2)) - mu.pow(2) - std.pow(2)).mean(-1)
