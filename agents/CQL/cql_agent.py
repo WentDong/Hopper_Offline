@@ -87,7 +87,8 @@ class CQL:
     def take_action(self, state):
         state = torch.tensor([state], dtype=torch.float).to(self.device)
         action = self.actor(state)[0]
-        return [action.item()]
+        # return [action.item()]
+        return action.detach().cpu().numpy()[0]
 
     def soft_update(self, net, target_net):
         for param_target, param in zip(target_net.parameters(),

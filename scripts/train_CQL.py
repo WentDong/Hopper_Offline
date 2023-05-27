@@ -22,7 +22,7 @@ def train(dataLoader, args):
 	cql_train(dataLoader, args)
 
 if __name__ == "__main__":
-	args = get_args()
+	args = get_args("cql")
 	dataset = SamaplesDataset(args.dataset_path, args.file_name)
 	dataset = cql_dataset(dataset,if_clip = True, truncation = 0.1)
 

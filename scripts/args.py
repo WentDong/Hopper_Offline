@@ -33,6 +33,18 @@ def get_args(algo="bc"):
 	if algo in ["bcq", "babcq", "babcqcd"]:  # BCQ
 		parser.add_argument('--lr_critic', default=1e-3, type = float, help='Learning rate for training critic')
 		parser.add_argument('--latent_dim', default=6, type = int, help='Latent dimension for BCQ')
+	if algo == "cql":  # CQL
+		parser.add_argument('--cql_hidden_dim', default=128, type = int, help='CQL hidden dim')
+		parser.add_argument('--cql_alpha', default=1.0, type = float, help='CQL alpha')
+		parser.add_argument('--cql_beta', default=5.0, type = float, help='CQL beta')
+		parser.add_argument('--cql_random_num', default=5, type = int, help='CQL random sampel num')
+		parser.add_argument('--cql_alr', default=3e-4, type = float, help='CQL actor learning rate')
+		parser.add_argument('--cql_clr', default=3e-3, type = float, help='CQL critic learning rate')
+		parser.add_argument('--cql_aplr', default=3e-4, type = float, help='CQL weight decay')
+		parser.add_argument('--cql_tau', default=0.005, type = float, help='CQL tau')
+		parser.add_argument('--cql_ac_bound', default=1, type = int, help='CQL batch size')
+		parser.add_argument('--cql_n_epochs', default=60, type = int, help='CQL n_epochs')	
+	
 	args = parser.parse_args()
 
 	if algo in ["bail", "babcq", "babcqcd"]:
