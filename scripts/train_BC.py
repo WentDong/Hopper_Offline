@@ -50,10 +50,10 @@ def train(model, dataLoader, step_interval, args):
 				pbar.set_description("Epoch: {}".format(epoch))
 				pbar.set_postfix(loss=loss.item())
 				pbar.update(1)
-				steps += args.batch_size
 				if steps % step_interval == 0:
 					Reward, episodes_len = eval.evaluate(model)
 					Reward_log.append(Reward)
+				steps += args.batch_size
 
 				# Print loss
 		Reward, episodes_len = eval.evaluate(model)
@@ -69,7 +69,7 @@ def train(model, dataLoader, step_interval, args):
 	return Reward_log
 if __name__ == "__main__":
 	args = get_args()
-	dataset = TrajectoryDataset(args.dataset_path, args.file_name, args.trajectory_truncation)
+	dataset = TrajectoryDataset(args.dataset_path, args.file_name, args.trajectory_truncation, args.len_threshold)
 	dataset = SamaplesDataset.from_traj(dataset)
 
 	dataLoader = DataLoader(
@@ -79,7 +79,7 @@ if __name__ == "__main__":
 	)
 	Reward_logs = []
 	# Step_logs = []
-	step_interval = 64000
+	step_interval = 16000
 	for _ in range(5):
 		model = BC(state_dim=11, action_dim=3, hidden_dim=args.hidden_dim).to(args.device)
 		Reward_log = train(model, dataLoader, step_interval, args)

@@ -16,7 +16,7 @@ from tqdm import *
 from evaluate import *
 from torch.utils.tensorboard import SummaryWriter
 
-def train(model, dataLoader, args, algo = "BCQ"):
+def train(model, dataLoader, args, step_interval, algo = "BCQ"):
 	eval = Evaluator(device =  args.device)
 	Mx_Reward = 0
 	idx =  0
@@ -29,7 +29,7 @@ def train(model, dataLoader, args, algo = "BCQ"):
 	with open(os.path.join(dir, "args.json"), "w") as f:
 		json.dump(args.__dict__, f, indent=2)
 	writer = SummaryWriter()
-	eval.evaluate(model)
+	Reward_log = []
 	for epoch in trange(args.n_epochs):
 		with tqdm(total = len(dataLoader)) as pbar:
 			for batch in dataLoader:
@@ -51,7 +51,11 @@ def train(model, dataLoader, args, algo = "BCQ"):
 				writer.add_scalar("KL_loss", KL_loss, steps)
 				writer.add_scalar("Critic_loss", Critic_loss, steps)
 				writer.add_scalar("Actor_loss", Actor_loss, steps)
-				steps += 1
+				if steps % step_interval == 0:
+					Reward, _ = eval.evaluate(model)
+					Reward_log.append(Reward)
+				steps += args.batch_size
+
 		
 		Reward, episodes_len = eval.evaluate(model)
 		if Reward> Mx_Reward:
@@ -60,9 +64,10 @@ def train(model, dataLoader, args, algo = "BCQ"):
 		torch.save(model.state_dict(), os.path.join(dir, algo+f"_{epoch%10}.pth"))
 		print("Epoch: {}, Reward: {}, Mean Episodes Length: {}".format(epoch, Reward, episodes_len))
 		print("####################################")
+		with open(os.path.join(dir, "log.txt"), "a") as f:
+			f.write("Epoch: {}, Reward: {}, Mean Episodes Length: {}\n".format(epoch, Reward, episodes_len))
 if __name__ == "__main__":
 	args = get_args("bcq")
-	model = BCQ(device = args.device, gamma = args.gamma, latent_dim = args.latent_dim, lr = args.lr, lr_critic = args.lr_critic).to(args.device)
 	dataset = TrajectoryDataset(args.dataset_path, args.file_name, args.trajectory_truncation)
 	dataset = SamaplesDataset.from_traj(dataset)
 	dataLoader = DataLoader(
@@ -70,4 +75,12 @@ if __name__ == "__main__":
 		batch_size=args.batch_size,
 		shuffle = True
 	)
-	train(model, dataLoader, args)
+	step_interval = 16000
+	Reward_logs = []
+	for _ in range(5):
+		model = BCQ(device = args.device, gamma = args.gamma, latent_dim = args.latent_dim, lr = args.lr, lr_critic = args.lr_critic).to(args.device)
+		Reward_log = train(model, dataLoader, step_interval, args)
+		Reward_logs.append(Reward_log)
+	Reward_logs = np.array(Reward_logs)
+	np.save(os.path.join(args.save_dir, "BCQ_Reward_logs.npy"), Reward_logs)
+	plot_eval(step_interval, Reward_logs, "BCQ")

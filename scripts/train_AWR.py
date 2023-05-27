@@ -14,14 +14,15 @@ from evaluate import *
 from dataloader import TrajectoryDataset
 from args import get_args
 from agents.AWR.AWR_agent import AWR
-from utils import Mount_Carlo_Estimation, Traj_Replay_Buffer, compute_advantage
+from utils import Mount_Carlo_Estimation, Traj_Replay_Buffer, plot_eval, compute_advantage
 # from agents.bail import utils
 from torch.utils.data import DataLoader
 from tqdm import *
 from torch.utils.tensorboard import SummaryWriter
 
-def train(model, replay_buffer, args):
+def train(model, replay_buffer, step_interval, args):
 	actor_optim = torch.optim.AdamW(model.actor.parameters(), lr=args.lr)
+	scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(actor_optim, 'min', patience=2000, factor=0.7, verbose=True)
 	critic_optim = torch.optim.AdamW(model.critic.parameters(), lr=args.lr)
 	writer = SummaryWriter()
 	step = 0	
@@ -29,6 +30,7 @@ def train(model, replay_buffer, args):
 	Eval = Evaluator(device=args.device)
 	idx = 0
 	Mx_Reward = 0
+	Reward_log = []
 	dir = os.path.join(args.save_dir, "AWR", str(idx))
 	while os.path.exists(dir):
 		idx += 1
@@ -84,13 +86,19 @@ def train(model, replay_buffer, args):
 					actor_optim.zero_grad()
 					actor_loss.backward()
 					actor_optim.step()
-
+					scheduler.step(actor_loss)
 					writer.add_scalar('actor_loss', actor_loss, step)
 					writer.add_scalar('critic_loss', critic_loss, step)
 					pbar.set_description("Epoch: {}".format(epoch))
 					pbar.set_postfix(actor_loss=actor_loss.item(), critic_loss=critic_loss.item(), weight = weight[0].item(), advantage = advantage[0].item())
 					pbar.update(1)
-					step += 1
+					if ((step+len(traj)) // step_interval)-step//step_interval>0:
+						# import pdb; pdb.set_trace()
+						# print(step)
+						Reward, _ = Eval.evaluate(model)
+						Reward_log.append(Reward)
+					step += len(traj)
+
 
 			# for batch in dataLoader:
 			# 	# Get data
@@ -103,7 +111,7 @@ def train(model, replay_buffer, args):
 			# 	done = batch['done'].float().to(args.device)
 
 			# 	# advantage = Reward - model.critic(state).detach()
-				
+	
 			# 	td_target = Reward + model.gamma * model.critic(next_state).detach() * (1-done)
 			# 	td_delta = td_target - model.critic(state).detach()
 			# 	advantage = compute_advantage(model.gamma, model.lamb, td_delta)
@@ -141,7 +149,7 @@ def train(model, replay_buffer, args):
 		with open(os.path.join(dir, "log.txt"), "a") as f:
 			f.write("Epoch: {}, Reward: {}, Mean Episodes Length: {}\n".format(epoch, Reward, episodes_len))
 		print("Epoch: {}, Reward: {}, Mean Episodes Length: {}".format(epoch, Reward, episodes_len))
-
+	return Reward_log
 
 if __name__ == "__main__":
 	args = get_args("bail")
@@ -155,7 +163,13 @@ if __name__ == "__main__":
 	# 	batch_size=args.batch_size,
 	# 	shuffle = True
 	# )	
+	step_interval = 16000
+	Rewards_log = []
 	for _ in range(5):
 		model = AWR(state_dim=11, action_dim=3, hidden_dim=args.hidden_dim).to(args.device)
-		train(model, replay_buffer, args)
-		
+		Reward_log = train(model, replay_buffer, step_interval, args)
+		Rewards_log.append(Reward_log)
+	
+	Reward_logs = np.array(Rewards_log)
+	np.save(os.path.join(args.save_dir, "AWR_Rewards.npy"), Reward_logs)
+	plot_eval(step_interval, Reward_logs, "AWR")

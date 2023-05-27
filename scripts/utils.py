@@ -139,7 +139,7 @@ def Mount_Carlo_Estimation(Replay_Buffer: Traj_Replay_Buffer, space_rollout=0, S
 		Traj = Trajs[i]
 
 		rewards = [Traj[j][3][0] for j in range(len(Traj))]  # List containing the rewards for each sample.
-
+		
 		monte_carlo_returns = []  # List containing the Monte-Carlo returns.
 		monte_carlo_return = 0
 

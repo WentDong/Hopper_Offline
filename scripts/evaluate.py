@@ -112,7 +112,7 @@ class Evaluator(object):
 			Accumulate_Reward = 0
 			total_steps = 0
 			
-			num_envs = 20
+			num_envs = self.len
 			for i in range(num_envs):
 				state = env.reset()
 				if hasattr(model, "reset"):
