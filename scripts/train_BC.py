@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 
+import json
 import inspect
 import os
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -28,8 +29,8 @@ def train(model, dataLoader, step_interval, args):
 		idx += 1
 		dir = os.path.join(args.save_dir, "BC", str(idx))
 	os.makedirs(dir)
-	with open(os.path.join(dir, "args.txt"), "w") as f:
-		f.write(str(args))
+	with open(os.path.join(dir, "args.json"), "w") as f:
+		json.dump(args.__dict__, f, indent=2)
 	
 	Reward_log = []
 	steps = 0

@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 
+import json
 import inspect
 import os
 currentdir = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
@@ -33,8 +34,8 @@ def train(model, replay_buffer, args):
 		idx += 1
 		dir = os.path.join(args.save_dir, "AWR", str(idx))
 	os.makedirs(dir)
-	with open(os.path.join(dir, "args.txt"), "w") as f:
-		f.write(str(args))
+	with open(os.path.join(dir, "args.json"), "w") as f:
+		json.dump(args.__dict__, f, indent=2)
 	for epoch in trange(args.n_epochs):
 		start = 0
 		Returns, Trajs = Mount_Carlo_Estimation(replay_buffer, Sample_Size = Trajs_per_iter, discount_factor = model.gamma) 

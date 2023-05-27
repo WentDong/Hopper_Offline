@@ -20,7 +20,7 @@ def get_args(algo="bc"):
 	parser.add_argument('-r', '--rollout', default=1000, type = int, help='Rollout length for MC estimation')
 	parser.add_argument('-g', '--gamma', default=0.99, type = float, help='Discount factor')
 
-	if algo in ["bail", "babcq"]:  # BAIL
+	if algo in ["bail", "babcq", "babcqcd"]:  # BAIL
 		parser.add_argument('-a', '--augment_mc', default="gain", help='Augmentation method for MC estimation')
 		parser.add_argument('-u', '--ue_n_epochs', default=50, type = int, help='Number of epochs to train upper envelope for')
 		parser.add_argument('--ue_lr', default=3e-3, type = float, help='Learning rate for training upper envelope')
@@ -30,12 +30,24 @@ def get_args(algo="bc"):
 		parser.add_argument('-k', '--ue_loss_k', default=1000, type = int, help='Soft constraint for upper envelope loss')
 		parser.add_argument('-p', '--select_percentage', default=0.25, type=float, help='Percentage of data to select')
 		parser.add_argument('--max_timesteps', default=int(2e6), type = int, help='Max time steps to run environment for')
-	if algo in ["bcq", "babcq"]:  # BCQ
+	if algo in ["bcq", "babcq", "babcqcd"]:  # BCQ
 		parser.add_argument('--lr_critic', default=1e-3, type = float, help='Learning rate for training critic')
 		parser.add_argument('--latent_dim', default=6, type = int, help='Latent dimension for BCQ')
+	if algo == "cql":  # CQL
+		parser.add_argument('--cql_hidden_dim', default=128, type = int, help='CQL hidden dim')
+		parser.add_argument('--cql_alpha', default=1.0, type = float, help='CQL alpha')
+		parser.add_argument('--cql_beta', default=5.0, type = float, help='CQL beta')
+		parser.add_argument('--cql_random_num', default=5, type = int, help='CQL random sampel num')
+		parser.add_argument('--cql_alr', default=3e-4, type = float, help='CQL actor learning rate')
+		parser.add_argument('--cql_clr', default=3e-3, type = float, help='CQL critic learning rate')
+		parser.add_argument('--cql_aplr', default=3e-4, type = float, help='CQL weight decay')
+		parser.add_argument('--cql_tau', default=0.005, type = float, help='CQL tau')
+		parser.add_argument('--cql_ac_bound', default=1, type = int, help='CQL batch size')
+		parser.add_argument('--cql_n_epochs', default=60, type = int, help='CQL n_epochs')	
+	
 	args = parser.parse_args()
 
-	if algo in ["bail", "babcq"]:
+	if algo in ["bail", "babcq", "babcqcd"]:
 		args.setting_name = "%s_r%s_g%s_t%s" % (args.file_name, args.rollout, args.gamma, args.trajectory_truncation)
 		args.setting_name += '_noaug' if not (args.augment_mc) else ''
 		args.setting_name += '_augNew' if args.augment_mc == 'new' else ''

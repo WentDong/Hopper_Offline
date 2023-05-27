@@ -15,7 +15,7 @@ from args import get_args
 from agents.bail import utils
 from agents.bail.mcret import *
 from agents.bail.bail_training import Value, train_upper_envelope
-from agents.BCQ.bcq_agent import BCQ
+from agents.BCQCD.bcqcd_agent import BCQCD
 from torch.utils.data import DataLoader
 from tqdm import *
 from torch.utils.tensorboard import SummaryWriter
@@ -40,14 +40,15 @@ def select_batch_ue(replay_buffer, states, returns, upper_envelope, C, args):
     border = ratios[bor_ind]
 
     '''begin selection'''
-    selected_buffer = utils.ReplayBuffer()
-    selected_buffer.keys = replay_buffer.keys + ['select']
+    selected_buffer = utils.ReplayBuffer(countdown=True)
+    
+    selected_buffer.keys = replay_buffer.keys[:-1] + ['select'] + ['countdown']
     print('Selecting with ue border', border.item())
     selected_len = 0
     for i in range(states.shape[0]):
         rat = ratios[i]
-        obs, next_obs, act, reward, done = replay_buffer.index(i)
-        selected_buffer.add((obs, next_obs, act, reward, done, (rat >= border).item()))
+        obs, next_obs, act, reward, done, countdown = replay_buffer.index(i, full=True)
+        selected_buffer.add((obs, next_obs, act, reward, done, (rat >= border).item(), countdown))
         selected_len += (rat >= border).item()
 
     initial_len = replay_buffer.get_length()
@@ -80,8 +81,9 @@ def train(model, dataLoader, args, algo = "BCQ"):
 				reward = batch['reward'].float().to(args.device)
 				not_done = batch['not_done'].float().to(args.device)
 				select = batch['select'].float().to(args.device)
+				countdown = batch['countdown'].float().to(args.device)
 
-				Recon_loss, KL_loss, Critic_loss, Actor_loss = model.train(state, action, next_states, reward, not_done, select)
+				Recon_loss, KL_loss, Critic_loss, Actor_loss = model.train(state, action, next_states, reward, not_done, select, countdown)
 				
 				pbar.set_description("Epoch: {}".format(epoch))
 				pbar.set_postfix(VAE_loss=Recon_loss+0.5 * KL_loss, Critic_loss = Critic_loss, distrub_loss = Actor_loss)
@@ -103,9 +105,9 @@ def train(model, dataLoader, args, algo = "BCQ"):
 
 
 if __name__ == "__main__":
-	args = get_args("babcq")
+	args = get_args("babcqcd")
 
-	replay_buffer = utils.ReplayBuffer()
+	replay_buffer = utils.ReplayBuffer(countdown=True)
 	replay_buffer.load(args.dataset_path, args.file_name, args.trajectory_truncation)
 
 	states, returns = get_mcret(replay_buffer, args)
@@ -117,5 +119,5 @@ if __name__ == "__main__":
 	dataset = SamaplesDataset.from_buffer(selected_buffer)
 	dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
 	
-	model = BCQ(device = device, gamma = args.gamma, latent_dim = args.latent_dim, lr = args.lr, lr_critic = args.lr_critic).to(device)
-	train(model, dataloader, args, "BABCQ")
+	model = BCQCD(device = device, rollout = args.rollout, gamma = args.gamma, latent_dim = args.latent_dim, lr = args.lr, lr_critic = args.lr_critic).to(device)
+	train(model, dataloader, args, "BABCQCD")

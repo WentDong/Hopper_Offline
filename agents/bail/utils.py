@@ -9,9 +9,13 @@ import numpy as np
 '''A standard replay buffer'''
 
 class ReplayBuffer(object):
-	def __init__(self):
+	def __init__(self, countdown=False):
 
+		self.countdown = countdown
+		
 		self.keys = ["state", "next_state", "action", "reward", "done"]
+		if countdown:
+			self.keys.append("countdown")
 
 		self.storage = []
 
@@ -56,8 +60,11 @@ class ReplayBuffer(object):
 					np.array(reward).reshape(-1, 1),
 					np.array(done).reshape(-1, 1))
 
-	def index(self, i):
-		return self.storage[i]
+	def index(self, i, full=False):
+		if full:
+			return self.storage[i]
+		else:
+			return self.storage[i][:5]
 
 	# def save(self, filename):
 	# 	np.save("./buffers/"+filename+"sars.npy", self.storage)
@@ -71,14 +78,19 @@ class ReplayBuffer(object):
 			data[key] = np.load(os.path.join(path, filename + "_" + key + ".npy"))
 		for i in range(len(data['state'])):
 			self.add((data['state'][i], data['next_state'][i], data['action'][i], data['reward'][i], 1 - data['not_done'][i]))
-			if truncation > 0:
-				if data['not_done'][i] == 0:
-					length = i - start + 1
-					start = i + 1
+			if data['not_done'][i] == 0:
+				length = i - start + 1
+				if self.countdown:
+					for t, j in enumerate(range(start, i + 1)):
+						self.storage[j] = (*self.storage[j], np.array([length - t]))
+						assert length - t > 0
+				if truncation > 0:
 					self.storage = self.storage[:-int(length * truncation)]
 					self.storage[-1] = (self.storage[-1][0], self.storage[-1][1], self.storage[-1][2], self.storage[-1][3], 1)
-
-
+				start = i + 1
+		# deal with last episode
+		if self.countdown:
+			self.storage = self.storage[:start]
 
 		num_samples = len(self.storage)
 		print('Load buffer size:', num_samples)
