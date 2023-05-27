@@ -64,6 +64,8 @@ class TrajectoryDataset(Dataset):
 		Traj = []
 		print(len(samples['state']))
 		lengths = 0
+		Mn_len = 10000
+		Mx_len = 0 
 		Accumulated_Reward = 0
 		for i in range(len(samples['state'])):
 			action = samples['action'][i]
@@ -74,6 +76,8 @@ class TrajectoryDataset(Dataset):
 			Accumulated_Reward += reward
 			Traj.append((state, next_state, action, reward, not_done))
 			if not_done == 0:
+				Mx_len = max(Mx_len, len(Traj))
+				Mn_len = min(Mn_len, len(Traj))
 				if (len(Traj)<=Threshold):
 					Traj = []
 					continue
@@ -83,6 +87,8 @@ class TrajectoryDataset(Dataset):
 				self.Trajectories.append(Traj)
 				Traj = []
 		print("Before Truncation:")
+		print("Max Trajectory Length: {}".format(Mx_len))
+		print("Min Trajectory Length: {}".format(Mn_len))
 		print("Average Trajectory Length: {}".format(lengths/len(self.Trajectories)))
 		print("Average Accumulated Reward: {}".format(Accumulated_Reward/len(self.Trajectories)))
 

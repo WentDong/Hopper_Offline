@@ -153,6 +153,8 @@ if __name__ == "__main__":
 	# 	dataset,
 	# 	batch_size=args.batch_size,
 	# 	shuffle = True
-	# )
-	model = AWR(state_dim=11, action_dim=3, hidden_dim=args.hidden_dim).to(args.device)
-	train(model, replay_buffer, args)
+	# )	
+	for _ in range(5):
+		model = AWR(state_dim=11, action_dim=3, hidden_dim=args.hidden_dim).to(args.device)
+		train(model, replay_buffer, args)
+		

@@ -168,3 +168,28 @@ def compute_advantage(gamma, lmbda, td_delta):
 		advantage_list.append(advantage)
 	advantage_list.reverse()
 	return torch.tensor(advantage_list, dtype=torch.float)
+
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+sns.set()
+import pandas as pd
+
+def plot_eval(step_interval, rewards, runs, dir = "figs"):
+	fig = plt.figure(figsize=(10, 10))
+	ax = fig.add_subplot(111)
+	# df_reward = pd.DataFrame(train_recorded_episode_reward_log).melt()
+	rewards = np.array(rewards)
+	df_reward  = pd.DataFrame(rewards).melt()
+	sns.lineplot(ax = ax, x='variable', y="value", data=df_reward, ci="sd", label="Reward")
+	# sns.lineplot(ax=ax, x=steps, y = rewards)
+	ax.set_title(f"Train learning Curve for {runs} runs")
+	ax.set_ylabel("Episodic Reward")
+	ax.set_xlabel("Steps * " + str(step_interval))
+	ax.legend(loc="lower right")
+	plt.tight_layout()
+	if not os.path.exists(dir):
+		os.makedirs(dir)
+	plt.savefig(os.path.join(dir, runs+"train_learning_curve.png"))
+	plt.show()
+
