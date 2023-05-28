@@ -32,9 +32,11 @@ def cql_train(dataLoader, args):
     action_bound = args.cql_ac_bound
     n_epochs = args.cql_n_epochs
     '''****************hyper-parameters*****************'''
-    Reward_log = []
     steps = 0
-    step_interval = 16000
+
+    if args.plot:
+        Reward_log = []
+        step_interval = args.plot_interval
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     target_entropy = -np.prod(3).item()
@@ -54,11 +56,11 @@ def cql_train(dataLoader, args):
                 agent.update(transition_dict)
                 pbar.update(1)
 
-                steps += args.batch_size
-                if steps % step_interval == 0:
+                if args.plot and (steps + len(batch['state']))//step_interval > steps // step_interval:
                     Reward, episode_len = Eval.evaluate(agent.actor)
                     Reward_log.append(Reward)
-        
+                steps += len(batch['state'])
+
         Reward, episode_len = Eval.evaluate(agent.actor)
          
         
@@ -79,5 +81,5 @@ def cql_train(dataLoader, args):
             torch.save(target_critic_1.state_dict(), os.path.join(currentdir, "target_critic_1.pth"))
             torch.save(target_critic_2.state_dict(), os.path.join(currentdir, "target_critic_2.pth"))
             torch.save(log_alpha, os.path.join(currentdir, "log_alpha.pth"))
-
-    return Reward_log
+    if args.plot:
+        return Reward_log

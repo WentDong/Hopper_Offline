@@ -20,12 +20,14 @@ from scripts.utils import plot_eval
 
 
 def train(dataLoader, args):
-	Reward_logs = []
-	for _ in range(5):
-		Reward_log = cql_train(dataLoader, args)
-		Reward_logs.append(Reward_log)
-	return Reward_logs
-
+	if args.plot:
+		Reward_logs = []
+		for _ in range(args.training_iteration):
+			Reward_log = cql_train(dataLoader, args)
+			Reward_logs.append(Reward_log)
+		return Reward_logs
+	else:
+		cql_train(dataLoader, args)
 if __name__ == "__main__":
 	args = get_args("cql")
 	dataset = SamaplesDataset(args.dataset_path, args.file_name)
@@ -36,8 +38,7 @@ if __name__ == "__main__":
 		batch_size=args.batch_size,
 		shuffle = True,
 	)
-
-	step_interval = 16000
+	step_interval = args.plot_interval
 	Reward_logs = train(dataLoader, args)
 	Reward_logs = np.array(Reward_logs)
 	np.save(os.path.join(args.save_dir, "CQL_Reward_logs.npy"), Reward_logs)
