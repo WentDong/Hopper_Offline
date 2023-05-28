@@ -20,20 +20,20 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 ## Train
 
 ```shell
-python scripts/train_ALGO.py
+python scripts/train_ALGO.py --params
 ```
 
-​	The `ALGO` could be one of AWR, BAIL, BC, BCQ, CQL, BABCQ. 
+​	The `ALGO` could be one of `AWR, BAIL, BC, BCQ, CQL, BABCQ`. 
 
 ​	For detailed training parameters, please view `scripts/args.py` for more information.
 
 ## Evaluate
 
 ```bash
-python run_log.py --env_name 'gym_Hopper-v2' --my_ai "AGENT"
+python run_log.py --env_name 'gym_Hopper-v2' --my_ai AGENT
 ```
 
-
+​	`AGENT` could be one of `bc, bail, BCQ, AWR, CQL, BABCQ`.
 
 
 
