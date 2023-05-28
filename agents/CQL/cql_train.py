@@ -34,7 +34,7 @@ def cql_train(dataLoader, args):
     '''****************hyper-parameters*****************'''
     Reward_log = []
     steps = 0
-    step_interval = 64000
+    step_interval = 16000
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     target_entropy = -np.prod(3).item()
