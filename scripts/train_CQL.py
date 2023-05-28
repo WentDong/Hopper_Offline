@@ -37,7 +37,7 @@ if __name__ == "__main__":
 		shuffle = True,
 	)
 
-	step_interval = 64000
+	step_interval = 16000
 	Reward_logs = train(dataLoader, args)
 	Reward_logs = np.array(Reward_logs)
 	np.save(os.path.join(args.save_dir, "CQL_Reward_logs.npy"), Reward_logs)
