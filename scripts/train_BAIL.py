@@ -27,7 +27,7 @@ from torch.utils.tensorboard import SummaryWriter
 # check pytorch device
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 # print("running on device:", device)
-
+from utils import plot_eval
 
 def get_mcret(replay_buffer, args):
     states, returns = get_mc(replay_buffer, args.data_name, args.gamma, args.rollout, args.augment_mc, args.device)
@@ -110,6 +110,10 @@ def train(model, dataLoader, args):
     with open(os.path.join(dir, "args.json"), "w") as f:
         json.dump(vars(args), f)
     step = 0
+    if args.plot:
+        step_interval = args.plot_interval
+        Reward_log = []
+    
     for epoch in trange(args.n_epochs):
         with tqdm(total=len(dataLoader)) as pbar:
             for batch in dataLoader:
@@ -125,6 +129,9 @@ def train(model, dataLoader, args):
                 loss.backward()
                 # Update parameters
                 optimizer.step()
+                if args.plot and ((timesteps + len(state)) // step_interval) > timesteps//step_interval:
+                    Reward, _ = Eval.evaluate(model)
+                    Reward_log.append(Reward)
                 timesteps += len(state)
                 pbar.set_description(f"Epoch: {epoch}, Timesteps: {timesteps}")
                 pbar.set_postfix(loss=loss.item())
@@ -140,8 +147,12 @@ def train(model, dataLoader, args):
         torch.save(model.state_dict(), os.path.join(dir, "BAIL_{}.pth".format(epoch % 10)))
         # tqdm.set_description("Epoch: {}, Reward: {}".format(epoch, Reward))
         print("Epoch: {}, Timesteps: {}, Reward: {}, Mean Episodes Length: {}".format(epoch, timesteps, Reward, episodes_len))
+        with open(os.path.join(dir, "log.txt"), "a") as f:
+            f.write("Epoch: {}, Timesteps: {}, Reward: {}, Mean Episodes Length: {}\n".format(epoch, timesteps, Reward, episodes_len))
         if timesteps > args.max_timesteps:
             break
+    if args.plot:
+        return Reward_log
 
 
 if __name__ == "__main__":
@@ -165,7 +176,19 @@ if __name__ == "__main__":
     dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
 
     # train bc
-    model = BC(state_dim=11, action_dim=3, hidden_dim=args.hidden_dim).to(args.device)
-    train(model, dataloader, args)
+    if not args.plot:
+        model = BC(state_dim=11, action_dim=3, hidden_dim=args.hidden_dim).to(args.device)
+        train(model, dataloader, args)
+    else:
+        Reward_logs = []
+
+        for _ in range(args.training_iteration):
+            model = BC(state_dim=11, action_dim=3, hidden_dim=args.hidden_dim).to(args.device)
+            Reward_log = train(model, dataloader, args)
+            Reward_logs.append(Reward_log)
+        Reward_logs = np.array(Reward_logs)
+        np.save(os.path.join(args.save_dir, "BAIL_Rewards.npy"), Reward_logs)
+        plot_eval(args.plot_interval, Reward_logs, "BAIL")
+
 
 

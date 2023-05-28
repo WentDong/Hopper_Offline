@@ -36,10 +36,10 @@ if __name__ =="__main__":
 	env.reset_model(state)
 	env.render()
 	for i in range(len(Traj)):
-		action = Traj[i][1]
+		action = Traj[i][2]
 
 		next_state, reward, done, _ = env.step(action)
-		print(next_state-Traj[i][2])
+		print(np.sum(next_state-Traj[i][1]))
 		print(reward-Traj[i][3])
 		env.render()
 

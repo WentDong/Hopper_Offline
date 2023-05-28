@@ -20,7 +20,7 @@ from torch.utils.data import DataLoader
 from tqdm import *
 from torch.utils.tensorboard import SummaryWriter
 
-def train(model, replay_buffer, step_interval, args):
+def train(model, replay_buffer, args):
 	actor_optim = torch.optim.AdamW(model.actor.parameters(), lr=args.lr)
 	scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(actor_optim, 'min', patience=2000, factor=0.7, verbose=True)
 	critic_optim = torch.optim.AdamW(model.critic.parameters(), lr=args.lr)
@@ -30,7 +30,9 @@ def train(model, replay_buffer, step_interval, args):
 	Eval = Evaluator(device=args.device)
 	idx = 0
 	Mx_Reward = 0
-	Reward_log = []
+	if args.plot:
+		step_interval = args.plot_interval
+		Reward_log = []
 	dir = os.path.join(args.save_dir, "AWR", str(idx))
 	while os.path.exists(dir):
 		idx += 1
@@ -92,7 +94,7 @@ def train(model, replay_buffer, step_interval, args):
 					pbar.set_description("Epoch: {}".format(epoch))
 					pbar.set_postfix(actor_loss=actor_loss.item(), critic_loss=critic_loss.item(), weight = weight[0].item(), advantage = advantage[0].item())
 					pbar.update(1)
-					if ((step+len(traj)) // step_interval)-step//step_interval>0:
+					if args.plot and ((step+len(traj)) // step_interval)-step//step_interval>0:
 						# import pdb; pdb.set_trace()
 						# print(step)
 						Reward, _ = Eval.evaluate(model)
@@ -149,7 +151,8 @@ def train(model, replay_buffer, step_interval, args):
 		with open(os.path.join(dir, "log.txt"), "a") as f:
 			f.write("Epoch: {}, Reward: {}, Mean Episodes Length: {}\n".format(epoch, Reward, episodes_len))
 		print("Epoch: {}, Reward: {}, Mean Episodes Length: {}".format(epoch, Reward, episodes_len))
-	return Reward_log
+	if args.plot:
+		return Reward_log
 
 if __name__ == "__main__":
 	args = get_args("bail")
@@ -163,13 +166,17 @@ if __name__ == "__main__":
 	# 	batch_size=args.batch_size,
 	# 	shuffle = True
 	# )	
-	step_interval = 16000
-	Rewards_log = []
-	for _ in range(5):
+	if not args.plot:
 		model = AWR(state_dim=11, action_dim=3, hidden_dim=args.hidden_dim).to(args.device)
-		Reward_log = train(model, replay_buffer, step_interval, args)
-		Rewards_log.append(Reward_log)
-	
-	Reward_logs = np.array(Rewards_log)
-	np.save(os.path.join(args.save_dir, "AWR_Rewards.npy"), Reward_logs)
-	plot_eval(step_interval, Reward_logs, "AWR")
+		train(model, replay_buffer, args)
+	else:
+		step_interval = args.plot_interval
+		Reward_logs = []
+		for _ in range(args.training_iteration):
+			model = AWR(state_dim=11, action_dim=3, hidden_dim=args.hidden_dim).to(args.device)
+			Reward_log = train(model, replay_buffer, args)
+			Reward_logs.append(Reward_log)
+		
+		Reward_logs = np.array(Reward_logs)
+		np.save(os.path.join(args.save_dir, "AWR_Rewards.npy"), Reward_logs)
+		plot_eval(step_interval, Reward_logs, "AWR")

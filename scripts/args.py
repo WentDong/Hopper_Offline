@@ -19,7 +19,10 @@ def get_args(algo="bc"):
 	parser.add_argument("--len_threshold", default = 0, type = int, help="Length threshold for trajectories, only those longer than threshold will be stored")
 	parser.add_argument('-r', '--rollout', default=1000, type = int, help='Rollout length for MC estimation')
 	parser.add_argument('-g', '--gamma', default=0.99, type = float, help='Discount factor')
-
+	parser.add_argument('--plot', default = False, action= 'store_true', help='Plot trainning Rewards with multiple times of trainning')
+	parser.add_argument('--plot_interval', default = 16000, type = int, help = 'Step interval for ploting trainning rewards')
+	parser.add_argument('--training_iteration', default=5, type = int, help = 'Number of times to train for plotting')
+	
 	if algo in ["bail", "babcq", "babcqcd"]:  # BAIL
 		parser.add_argument('-a', '--augment_mc', default="gain", help='Augmentation method for MC estimation')
 		parser.add_argument('-u', '--ue_n_epochs', default=50, type = int, help='Number of epochs to train upper envelope for')

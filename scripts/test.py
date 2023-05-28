@@ -12,15 +12,15 @@ import numpy as np
 args = get_args()
 dataset = TrajectoryDataset(args.dataset_path, args.file_name, Threshold=0)
 
-len = [len(traj) for traj in dataset.Trajectories]
-len = np.array(len)
-
-print(len.mean(), len.max(), len.min())
+lens = [len(traj) for traj in dataset.Trajectories]
+lens = np.array(lens)
+print(len(lens))
+print(lens.mean(), lens.max(), lens.min())
 
 from matplotlib import pyplot as plt
 
 plt.figure(figsize = (3, 5))
-plt.boxplot(len, patch_artist=True, showmeans=True, labels = [''], medianprops={'linestyle':'--', 'color':'red'}, boxprops={'color':'black', 'facecolor': 'steelblue'})
+plt.boxplot(lens, patch_artist=True, showmeans=True, labels = [''], medianprops={'linestyle':'--', 'color':'red'}, boxprops={'color':'black', 'facecolor': 'steelblue'})
 plt.title("Distribution of Trajectory Lengths")
 plt.ylabel("Length")
 plt.savefig("Trajectory_Lengths.png")

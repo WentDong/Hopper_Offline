@@ -4,3 +4,10 @@ gym==0.18.3
 mujoco-py<2.2,>=2.1
 torch
 torchvision
+tqdm
+tensorboard
+inspect
+json
+matplotlib
+pandas
+seaborn
