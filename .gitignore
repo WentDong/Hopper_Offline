@@ -145,3 +145,8 @@ MUJOCO_LOG.TXT
 **/plots/*.png
 **/results/*.npy
 runs/
+agents/bccd
+agents/BCQCD
+agents/bailcd
+figs/
+freqencoder
