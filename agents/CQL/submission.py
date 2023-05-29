@@ -27,12 +27,12 @@ target_entropy = -np.prod(3).item()
 '''****************hyper-parameters*****************'''
 def my_load_model(agent):
     print(os.path.join(base_dir, "CQL", "actor.pth"))
-    agent.actor.load_state_dict(torch.load(os.path.join(base_dir, "actor.pth")))
-    agent.critic_1.load_state_dict(torch.load(os.path.join(base_dir, "critic_1.pth")))
-    agent.critic_2.load_state_dict(torch.load(os.path.join(base_dir, "critic_2.pth")))
+    agent.actor.load_state_dict(torch.load(os.path.join(base_dir, "actor.pth"), map_location=torch.device('cpu')))
+    agent.critic_1.load_state_dict(torch.load(os.path.join(base_dir, "critic_1.pth"), map_location=torch.device('cpu')))
+    agent.critic_2.load_state_dict(torch.load(os.path.join(base_dir, "critic_2.pth"), map_location=torch.device('cpu')))
     agent.log_alpha = torch.load(os.path.join(base_dir, "log_alpha.pth"))
-    agent.target_critic_1.load_state_dict(torch.load(os.path.join(base_dir, "target_critic_1.pth")))
-    agent.target_critic_2.load_state_dict(torch.load(os.path.join(base_dir, "target_critic_2.pth")))
+    agent.target_critic_1.load_state_dict(torch.load(os.path.join(base_dir, "target_critic_1.pth"), map_location=torch.device('cpu')))
+    agent.target_critic_2.load_state_dict(torch.load(os.path.join(base_dir, "target_critic_2.pth"), map_location=torch.device('cpu')))
 
 
 agent = CQL(state_dim=11, action_dim=3, hidden_dim=128, action_bound = action_bound, actor_lr = actor_lr,
