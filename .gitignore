@@ -141,7 +141,7 @@ olympics_engine/test/.pytest_cache/
 */.DS_Store
 models/
 MUJOCO_LOG.TXT
-# *.pth
+*.pth
 **/plots/*.png
 **/results/*.npy
 runs/
