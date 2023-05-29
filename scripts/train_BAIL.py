@@ -18,6 +18,7 @@ from agents.bail import utils, bail_training
 from agents.bail.mcret import *
 from agents.bail.bail_training import Value, train_upper_envelope, plot_envelope, plot_envelope_with_clipping
 from agents.bc.bc_agent import BC
+from utils import plot_eval
 from torch.utils.data import DataLoader
 from tqdm import *
 from torch.utils.tensorboard import SummaryWriter
@@ -109,9 +110,9 @@ def train(model, dataLoader, args):
     os.makedirs(dir)
     with open(os.path.join(dir, "args.json"), "w") as f:
         json.dump(vars(args), f)
+    Reward_log = []
     step = 0
     if args.plot:
-        step_interval = args.plot_interval
         Reward_log = []
     
     for epoch in trange(args.n_epochs):
@@ -125,11 +126,11 @@ def train(model, dataLoader, args):
 
                 optimizer.zero_grad()
                 writer.add_scalar("actor_loss", loss.item(), step)
-                step += 1
+
                 loss.backward()
                 # Update parameters
                 optimizer.step()
-                if args.plot and ((timesteps + len(state)) // step_interval) > timesteps//step_interval:
+                if args.plot and ((timesteps + len(state)) // args.plot_interval) > timesteps//args.plot_interval:
                     Reward, _ = Eval.evaluate(model)
                     Reward_log.append(Reward)
                 timesteps += len(state)
@@ -152,7 +153,10 @@ def train(model, dataLoader, args):
         if timesteps > args.max_timesteps:
             break
     if args.plot:
-        return Reward_log
+        Reward_log = np.array(Reward_log)
+        np.save(os.path.join(dir, "BAIL_reward.npy"), Reward_log)
+
+        return Reward_log.tolist()
 
 
 if __name__ == "__main__":
@@ -189,6 +193,7 @@ if __name__ == "__main__":
         Reward_logs = np.array(Reward_logs)
         np.save(os.path.join(args.save_dir, "BAIL_Rewards.npy"), Reward_logs)
         plot_eval(args.plot_interval, Reward_logs, "BAIL")
+
 
 
 

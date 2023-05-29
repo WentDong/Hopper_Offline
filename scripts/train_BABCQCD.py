@@ -19,42 +19,9 @@ from agents.BCQCD.bcqcd_agent import BCQCD
 from torch.utils.data import DataLoader
 from tqdm import *
 from torch.utils.tensorboard import SummaryWriter
-from train_BAIL import get_mcret, train_ue
+from train_BAILCD import get_mcret, train_ue, select_batch_ue
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-
-def select_batch_ue(replay_buffer, states, returns, upper_envelope, C, args):
-    states = torch.from_numpy(states).to(device)
-    returns = torch.from_numpy(returns).to(device)
-    upper_envelope = upper_envelope.to(device)
-
-    ratios = []
-    for i in range(states.shape[0]):
-        s, ret = states[i], returns[i]
-        s_val = upper_envelope(s.unsqueeze(dim=0).float()).detach().squeeze()
-        ratios.append(ret / torch.min(s_val, C) if C is not None else ret / s_val)
-
-    ratios = torch.stack(ratios).view(-1)
-    increasing_ratios, increasing_ratio_indices = torch.sort(ratios)
-    bor_ind = increasing_ratio_indices[-int(args.select_percentage * states.shape[0])]
-    border = ratios[bor_ind]
-
-    '''begin selection'''
-    selected_buffer = utils.ReplayBuffer(countdown=True)
-    
-    selected_buffer.keys = replay_buffer.keys[:-1] + ['select'] + ['countdown']
-    print('Selecting with ue border', border.item())
-    selected_len = 0
-    for i in range(states.shape[0]):
-        rat = ratios[i]
-        obs, next_obs, act, reward, done, countdown = replay_buffer.index(i, full=True)
-        selected_buffer.add((obs, next_obs, act, reward, done, (rat >= border).item(), countdown))
-        selected_len += (rat >= border).item()
-
-    initial_len = replay_buffer.get_length()
-    print('border:', border, 'selecting ratio:', selected_len, '/', initial_len)
-
-    return (selected_buffer, selected_len, border)
 
 def train(model, dataLoader, args, algo = "BCQ"):
 	eval = Evaluator(device =  args.device)
