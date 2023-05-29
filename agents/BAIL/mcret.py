@@ -3,7 +3,7 @@ import numpy as np
 import torch
 import argparse
 import os
-from agents.bail import utils
+from agents.BAIL import utils
 
 
 def get_mc(replay_buffer, data_name, gamma=0.99, rollout=1000, augment_mc='gain', device=None):
