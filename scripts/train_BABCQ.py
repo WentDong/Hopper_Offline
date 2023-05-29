@@ -136,7 +136,7 @@ if __name__ == "__main__":
 	Reward_logs = []
 
 	for _ in range(5):
-		model = BCQ(device = device, gamma = args.gamma, latent_dim = args.latent_dim, lr = args.lr, lr_critic = args.lr_critic, sched = args.sched).to(device)
+		model = BCQ(device = device, gamma = args.gamma, latent_dim = args.latent_dim, lr = args.lr, lr_critic = args.lr_critic).to(device)
 		Reward_log = train(model, dataloader, args, step_interval, "BABCQ")
 		Reward_logs.append(Reward_log)
 	
