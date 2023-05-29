@@ -116,6 +116,7 @@ class CQL:
         next_value = torch.min(q1_value,
                                q2_value) + self.log_alpha.exp() * entropy
         td_target = rewards + self.gamma * next_value * (1 - dones)
+        td_target = td_target.mean(dim=1).unsqueeze(1)
         critic_1_loss = torch.mean(
             F.mse_loss(self.critic_1(states, actions), td_target.detach()))
         critic_2_loss = torch.mean(
