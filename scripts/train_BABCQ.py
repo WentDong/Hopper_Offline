@@ -56,7 +56,7 @@ def select_batch_ue(replay_buffer, states, returns, upper_envelope, C, args):
 
     return (selected_buffer, selected_len, border)
 
-def train(model, dataLoader, args, step_interval, algo = "BCQ"):
+def train(model, dataLoader, args, algo = "BCQ"):
 	eval = Evaluator(device =  args.device)
 	Mx_Reward = 0
 	idx =  0
@@ -71,8 +71,12 @@ def train(model, dataLoader, args, step_interval, algo = "BCQ"):
 	writer = SummaryWriter()
 	eval.evaluate(model)
 	
-	Reward_log = []
+	if args.plot:
+		Reward_log = []
+		step_interval = args.plot_interval
+
 	steps = 0
+
 	for epoch in trange(args.n_epochs):
 		with tqdm(total = len(dataLoader)) as pbar:
 			for batch in dataLoader:
@@ -92,7 +96,7 @@ def train(model, dataLoader, args, step_interval, algo = "BCQ"):
 				pbar.set_postfix(VAE_loss=Recon_loss+0.5 * KL_loss, Critic_loss = Critic_loss, distrub_loss = Actor_loss, vae_lr = model.VAE_optim.param_groups[0]['lr'], actor_lr = model.Actor_disturb_optim.param_groups[0]['lr'], critic_lr = model.Critic_optim.param_groups[0]['lr'])
 				pbar.update(1)
 				
-				if ((steps+len(state)) // step_interval)-steps//step_interval>0:
+				if args.plot and ((steps+len(state)) // step_interval)-steps//step_interval>0:
 					Reward, _ = eval.evaluate(model)
 					Reward_log.append(Reward)
 					writer.add_scalar("Reward", Reward, steps)
@@ -110,11 +114,12 @@ def train(model, dataLoader, args, step_interval, algo = "BCQ"):
 		torch.save(model.state_dict(), os.path.join(dir, algo+f"_{epoch%10}.pth"))
 		print("Epoch: {}, Reward: {}, Mean Episodes Length: {}".format(epoch, Reward, episodes_len))
 		print("####################################")
+
+	if args.plot:	
+		Reward_log = np.array(Reward_log)
+		np.save(os.path.join(dir, algo+"_reward.npy"), Reward_log)
 		
-	Reward_log = np.array(Reward_log)
-	np.save(os.path.join(dir, algo+"_reward.npy"), Reward_log)
-	
-	return Reward_log.tolist()
+		return Reward_log.tolist()
 
 
 if __name__ == "__main__":
@@ -132,15 +137,17 @@ if __name__ == "__main__":
 	dataset = SamaplesDataset.from_buffer(selected_buffer)
 	dataloader = DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=4)
 	
-	step_interval = 16000
-	Reward_logs = []
 
-	for _ in range(5):
-		model = BCQ(device = device, gamma = args.gamma, latent_dim = args.latent_dim, lr = args.lr, lr_critic = args.lr_critic).to(device)
-		Reward_log = train(model, dataloader, args, step_interval, "BABCQ")
-		Reward_logs.append(Reward_log)
-	
-	Reward_logs = np.array(Reward_logs)
-	np.save(os.path.join(args.save_dir, "BABCQ_Rewards.npy"), Reward_logs)
-	plot_eval(step_interval, Reward_logs, "BABCQ")
+	if args.plot:
+		step_interval = args.plot_interval
+		Reward_logs = []
+
+		for _ in range(args.training_iteration):
+			model = BCQ(device = device, gamma = args.gamma, latent_dim = args.latent_dim, lr = args.lr, lr_critic = args.lr_critic).to(device)
+			Reward_log = train(model, dataloader, args, "BABCQ")
+			Reward_logs.append(Reward_log)
+		
+		Reward_logs = np.array(Reward_logs)
+		np.save(os.path.join(args.save_dir, "BABCQ_Rewards.npy"), Reward_logs)
+		plot_eval(step_interval, Reward_logs, "BABCQ")
 	
