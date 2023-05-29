@@ -150,4 +150,6 @@ if __name__ == "__main__":
 		Reward_logs = np.array(Reward_logs)
 		np.save(os.path.join(args.save_dir, "BABCQ_Rewards.npy"), Reward_logs)
 		plot_eval(step_interval, Reward_logs, "BABCQ")
-	
+	else:
+		model = BCQ(device = device, gamma = args.gamma, latent_dim = args.latent_dim, lr = args.lr, lr_critic = args.lr_critic).to(device)
+		train(model, dataloader, args, "BABCQ")
