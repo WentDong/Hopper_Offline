@@ -33,7 +33,7 @@ python scripts/train_ALGO.py --params
 python run_log.py --env_name 'gym_Hopper-v2' --my_ai AGENT
 ```
 
-​	`AGENT` could be one of `bc, bail, BCQ, AWR, CQL, BABCQ`.
+​	`AGENT` could be one of `BC, BAIL, BCQ, AWR, CQL, BABCQ`.
 
 
 

@@ -13,10 +13,10 @@ os.sys.path.insert(0, os.path.dirname(parentdir))
 from evaluate import *
 from dataloader import SamaplesDataset, TrajectoryDataset
 from args import get_args
-from agents.bc.bc_agent import BC
+from agents.BC.bc_agent import BC
 from torch.utils.data import DataLoader
 from tqdm import *
-from utils import plot_eval
+from scripts.utils import plot_eval
 
 def train(model, dataLoader, args):
 	optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr)

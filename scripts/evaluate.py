@@ -67,13 +67,13 @@ except RuntimeError:
 
 
 class Evaluator(object):
-	def __init__(self, env='Hopper-v2', len = 16, device ='cup'):
+	def __init__(self, env='Hopper-v2', len = 16, device ='cpu', parallel = True):
 		self.env = env
 		self.len = len
 		self.env_list = self.Parallel_env()
 		self.max_episodes_length = 1000
 		self.device = device
-
+		self.parallel = parallel
 	def Parallel_env(self):
 		env_list = [gym.make(self.env) for _ in range(self.len)]
 		return env_list
@@ -99,7 +99,7 @@ class Evaluator(object):
 		return Accumulate_Reward, total_steps
 
 	def evaluate(self, model):
-		if self.device == 'cpu':
+		if self.parallel:
 			model_list = self.Parallel_model(model)
 			Zip = zip(self.env_list, model_list)
 			pool = Pool(self.len)

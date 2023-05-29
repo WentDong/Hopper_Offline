@@ -12,11 +12,11 @@ os.sys.path.insert(0, os.path.dirname(parentdir))
 from evaluate import *
 from dataloader import *
 from args import get_args
-from agents.bail import utils
-from agents.bail.mcret import *
-from agents.bail.bail_training import Value, train_upper_envelope
+from agents.BAIL import utils
+from agents.BAIL.mcret import *
+from agents.BAIL.bail_training import Value, train_upper_envelope
 from agents.BCQ.bcq_agent import BCQ
-from utils import plot_eval
+from scripts.utils import plot_eval
 from torch.utils.data import DataLoader
 from tqdm import *
 from torch.utils.tensorboard import SummaryWriter

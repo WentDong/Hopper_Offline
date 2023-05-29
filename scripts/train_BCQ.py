@@ -15,7 +15,7 @@ from torch.utils.data import DataLoader
 from tqdm import *
 from evaluate import *
 from torch.utils.tensorboard import SummaryWriter
-from utils import plot_eval
+from scripts.utils import plot_eval
 def train(model, dataLoader, args, algo = "BCQ"):
 	eval = Evaluator(device =  args.device)
 	Mx_Reward = 0

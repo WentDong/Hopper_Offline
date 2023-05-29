@@ -14,11 +14,11 @@ os.sys.path.insert(0, os.path.dirname(parentdir))
 from evaluate import *
 from dataloader import SamaplesDataset
 from args import get_args
-from agents.bail import utils, bail_training
-from agents.bail.mcret import *
-from agents.bail.bail_training import Value, train_upper_envelope, plot_envelope, plot_envelope_with_clipping
-from agents.bc.bc_agent import BC
-from utils import plot_eval
+from agents.BAIL import utils, bail_training
+from agents.BAIL.mcret import *
+from agents.BAIL.bail_training import Value, train_upper_envelope, plot_envelope, plot_envelope_with_clipping
+from agents.BC.bc_agent import BC
+from scripts.utils import plot_eval
 from torch.utils.data import DataLoader
 from tqdm import *
 from torch.utils.tensorboard import SummaryWriter
