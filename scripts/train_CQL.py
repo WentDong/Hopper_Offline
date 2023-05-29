@@ -38,8 +38,11 @@ if __name__ == "__main__":
 		batch_size=args.batch_size,
 		shuffle = True,
 	)
-	step_interval = args.plot_interval
-	Reward_logs = train(dataLoader, args)
-	Reward_logs = np.array(Reward_logs)
-	np.save(os.path.join(args.save_dir, "CQL_Reward_logs.npy"), Reward_logs)
-	plot_eval(step_interval, Reward_logs, "CQL")    # I only use batch_size for plot_eval
+	if args.plot:
+		step_interval = args.plot_interval
+		Reward_logs = train(dataLoader, args)
+		Reward_logs = np.array(Reward_logs)
+		np.save(os.path.join(args.save_dir, "CQL_Reward_logs.npy"), Reward_logs)
+		plot_eval(step_interval, Reward_logs, "CQL")    # I only use batch_size for plot_eval
+	else:
+		train(dataLoader, args)
