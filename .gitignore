@@ -150,3 +150,5 @@ agents/BCQCD
 agents/bailcd
 figs/
 freqencoder
+scripts/train_BCQCD.py
+scripts/train_BAILCD.py
